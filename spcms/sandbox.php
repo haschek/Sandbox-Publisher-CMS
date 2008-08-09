@@ -36,7 +36,7 @@
  * @author      Michael Haschke @ eye48.com
  * @copyright   2008 Michael Haschke
  * @category    spcms
- * @version     $Id: $
+ * @version     $Id$
  * @licence     http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
  *
  **/

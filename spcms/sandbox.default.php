@@ -3,7 +3,7 @@
 /**
  * Sandbox Publisher - Default configuration
  *
- * @version $Id:$
+ * @version $Id$
  *
  * You may configure everything here, but if you want to update your Sandbox
  * based App/Website easy, it is recommended to set up your own configuration

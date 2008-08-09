@@ -2,7 +2,7 @@
 # .htaccess
 #
 # @author Michael Haschke @ eye48.com
-# @version $Id: $
+# @version $Id$
 
 # please replace '/path/to/sandbox.php' by
 # the location of sandbox.php on your server (base url)
