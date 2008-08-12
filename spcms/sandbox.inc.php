@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Sandbox Publisher 0.1 RC1
  *
@@ -9,10 +8,21 @@
  * it is easy to integrate plugins (e.g. to connect a database). It works with
  * virtual files (non existing ones), too.
  *
+ * PHP version 5
+ *
+ * METADATA
+ *
+ * @category  SPCMS
+ * @package   Sandbox-Core
+ * @author    Michael Haschke, eye48.com
+ * @copyright 2008 Michael Haschke
+ * @license   http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @version   SVN: $Id$
+ *
  * WEBSITES
  *
- * @link http://sandbox.eye48.com/sandbox-publisher-cms Project Website and Overview
- * @link http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
+ * @link      http://sandbox.eye48.com/sandbox-publisher-cms Project Website and Overview
+ * @link      http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
  *
  * LICENCE
  *
@@ -29,15 +39,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * @link http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- *
- * METADATA
- *
- * @author      Michael Haschke @ eye48.com
- * @copyright   2008 Michael Haschke
- * @category    spcms
- * @version     $Id$
- * @licence     http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link      http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
  *
  **/
 
@@ -50,10 +52,13 @@
  * content, providing interfaces to plugin manager/event dispatcher and the
  * content store, can assign template folders, selecting the template file.
  *
- * @since       0.1
- * @category    spcms
- * @package     Sandbox-Core
- * @module      Sandbox-Includes
+ * @category   SPCMS
+ * @package    Sandbox-Core
+ * @subpackage Sandbox-Includes
+ * @author     Michael Haschke, eye48.com
+ * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @since      0.1
  * 
  **/
 class Sandbox
@@ -99,14 +104,14 @@ class Sandbox
      * The constructor ceates the objects for Sandbox content store and the
      * plugin manager/event dispatcher, load plugins and templates.
      * 
+     * @param array $config Configuration from sandbox.default|user.php ($c)
+     *
+     * @return void
+     *
      * @since 0.1
      * @access public
      *
      * @publish event sandbox_construct_complete
-     *
-     * @param array $config Configuration from sandbox.default|user.php ($c)
-     *
-     * @return void
      **/
     public function __construct($config)
     {
@@ -144,13 +149,15 @@ class Sandbox
         if (isset($config['template']['folder']) && is_array($config['template']['folder'])
             && count($config['template']['folder']) > 0) {
             
-            foreach ($config['template']['folder'] as $templatefolder)
+            foreach ($config['template']['folder'] as $templatefolder) {
                 $this->templateAddFolder($templatefolder);
+            }
         }
         
         // set template
-        if (isset($config['template']['name']) && $config['template']['name'])
+        if (isset($config['template']['name']) && $config['template']['name']) {
             $this->templateSetName($config['template']['name']);
+        }
             
         /* EVENT sandbox_construct_complete
          * published at the end of Sandbox::__construct,
@@ -169,16 +176,16 @@ class Sandbox
      * content in the Sandbox content object. PHP code (in php tags) is executed
      * on the fly.
      *
+     * @param string $file absolute file name
+     *
+     * @return boolean true for file has been parsed, falso for file not found
+     *
      * @since 0.1
      * @access public
      *
      * @publish event sandbox_parse_start
      * @publish event sandbox_parse_end
      * @publish event sandbox_parse_failed
-     *
-     * @param string $file absolute file name
-     *
-     * @return boolean true for file has been parsed, falso for file not found
      **/
     public function parse($file)
     {
@@ -242,11 +249,10 @@ class Sandbox
      *
      * Runs the PHP template file to print out the content.
      *
+     * @return boolean true for template has been included, false for template was not found
+     *
      * @since 0.1
      * @access public
-     *
-     * @param void
-     * @return boolean true for template has been included, false for template was not found
      *
      * @throws Exception 'No template assigned'
      **/
@@ -267,11 +273,12 @@ class Sandbox
      * If path exists the folder will be added to $templatefolders stack. The path
      * must be absolute, or relative to the Sandbox root path.
      *
+     * @param string $folder realative or absolute path to template folder.
+     *
+     * @return boolean true for success, false for wrong folder (not existing)
+     *
      * @since 0.1
      * @access public
-     *
-     * @param string $folder realative or absolute path to template folder.
-     * @return boolean true for success, false for wrong folder (not existing)
      **/
     public function templateAddFolder($folder = null)
     {
@@ -305,11 +312,12 @@ class Sandbox
      * Search the name of the template in the folders which are stored in the
      * template folder stack (@see Sandbox::templateAddFolder).
      *
+     * @param string $name name of template file without extension (.php)
+     *
+     * @return string absolute file name of template inclusive extension
+     *
      * @since 0.1
      * @access public
-     *
-     * @param string $name name of template file without extension (.php)
-     * @return string absolute file name of template inclusive extension
      *
      * @throws Exception 'Template %name% was not found or is not readable.'
      **/
@@ -335,11 +343,12 @@ class Sandbox
      * Sandbox content object (@see SandboxContent). This is like an short key
      * command for 'echo $this->content->varname;'.
      *
+     * @param string $var name of variable
+     *
+     * @return mixed content of variable
+     *
      * @since 0.1
      * @access public
-     *
-     * @param string $var name of variable
-     * @return mixed content of variable
      *
      * @todo option to check var content for trimming, stripping tags, controlling charset, ...
      **/
@@ -356,10 +365,13 @@ class Sandbox
  * The content object where the content variables are stored in. Currently only
  * some magic methods and an array stack.
  *
- * @since       0.1
- * @category    spcms
- * @package     Sandbox-Core
- * @module      Sandbox-Includes
+ * @category   SPCMS
+ * @package    Sandbox-Core
+ * @subpackage Sandbox-Includes
+ * @author     Michael Haschke, eye48.com
+ * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @since      0.1
  * 
  **/
 class SandboxContent
@@ -376,10 +388,10 @@ class SandboxContent
      *
      * The constructor is only a stub right now, may be needed later for more stuff.
      *
+     * @return boolean true
+     *
      * @since 0.1
      * @access public
-     * @param void
-     * @return boolean true
      **/
     public function __construct()
     {
@@ -391,8 +403,12 @@ class SandboxContent
      *
      * Do not use this directly, just use $SandboxContentObject->varname;
      *
+     * @param string $var variable name
+     *
+     * @return mixed
+     *
      * @since 0.1
-     * @access public
+     * @access private
      **/
     public function __get($var)
     {
@@ -408,8 +424,13 @@ class SandboxContent
      *
      * Do not use this directly, just use $SandboxContentObject->varname = $varcontent;
      *
+     * @param string $var   variable name
+     * @param mixed  $value variable value
+     *
+     * @return void
+     *
      * @since 0.1
-     * @access public
+     * @access private
      **/
     public function __set($var, $value)
     {
@@ -421,8 +442,12 @@ class SandboxContent
      *
      * Do not use this directly, just use isset($SandboxContentObject->varname);
      *
+     * @param string $var variable name
+     *
+     * @return boolean
+     *
      * @since 0.1
-     * @access public
+     * @access private
      **/
     public function __isset($var)
     {
@@ -434,8 +459,12 @@ class SandboxContent
      *
      * Do not use this directly, just use unset($SandboxContentObject->varname);
      *
+     * @param string $var variable name
+     *
+     * @return boolean
+     *
      * @since 0.1
-     * @access public
+     * @access private
      **/
     public function __unset($var)
     {
@@ -454,10 +483,13 @@ class SandboxContent
  * their event handlers. Events are published (propagated) through the event
  * dispatcher, too.
  *
- * @since       0.1
- * @category    spcms
- * @package     Sandbox-Core
- * @module      Sandbox-Includes
+ * @category   SPCMS
+ * @package    Sandbox-Core
+ * @subpackage Sandbox-Includes
+ * @author     Michael Haschke, eye48.com
+ * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @since      0.1
  * 
  **/
 class SandboxPluginmanager
@@ -504,10 +536,10 @@ class SandboxPluginmanager
     /**
      * Sandbox Plugin Manager constructor
      *
+     * @param Sandbox $sandbox Sandbox object
+     *
      * @access private
      * @since 0.1
-     *
-     * @param Sandbox $sandbox Sandbox object
      **/
     public function __construct(Sandbox $sandbox)
     {
@@ -522,11 +554,12 @@ class SandboxPluginmanager
      * (@see SandboxPluginmanager:$_plugins). Uses the plugin includer
      * (@see SandboxPluginmanager:need()).
      *
+     * @param string $pluginname Plugin name relative to one of the stored plugin folders (without .php)
+     *
+     * @return SandboxPlugin instance of plugin class
+     *
      * @access public
      * @since 0.1
-     *
-     * @param string $pluginname Plugin name relative to one of the stored plugin folders (without .php)
-     * @return SandboxPlugin instance of plugin class
      *
      * @throws Exception 'Plugin %name% is not available!'
      **/
@@ -567,11 +600,12 @@ class SandboxPluginmanager
      * Extract absolute file name of plugin by search in assigned plugin folders
      * (@see SandboxPluginmanager::_search()) and includes it.
      *
+     * @param string $pluginname Plugin name relative to one of the stored plugin folders (without .php)
+     *
+     * @return mixed absolute path to directory where plugin is located, or false when file not found
+     *
      * @access public
      * @since 0.1
-     *
-     * @param string $pluginname Plugin name relative to one of the stored plugin folders (without .php)
-     * @return mixed absolute path to directory where plugin is located, or false when file not found
      **/
     public function need($pluginname = null)
     {
@@ -583,7 +617,7 @@ class SandboxPluginmanager
             // already included?
             if (in_array($pluginfile, $this->_includes) === false) {
                 // include plugin class
-                require_once $pluginfile;
+                include_once $pluginfile;
                 // add to inludes
                 $this->_includes[] = $pluginfile;
             }
@@ -602,19 +636,20 @@ class SandboxPluginmanager
      * can be located for the intern search. You can add one specific folder
      * and also its sub folders.
      *
+     * @param string  $folder folder, absolute path or relative to sandbox root
+     * @param boolean $sub    set to true when sub folders should be inlcuded (false is default)
+     *
+     * @return boolean true (folder was successfully added) or false (folder was not added)
+     *
      * @access public
      * @since 0.1
-     *
-     * @param string $folder folder, absolute path or relative to sandbox root
-     * @param boolean $sub set to true when sub folders should be inlcuded (false is default)
-     * @return boolean true (folder was successfully added) or false (folder was not added)
      **/
     public function addFolder($folder = null, $sub = false)
     {
     
         if (!$folder || !is_string($folder)) return false;
         
-        if (substr($folder,0,1) != DIRECTORY_SEPARATOR) // local path, prefix sandbox path
+        if (substr($folder, 0, 1) != DIRECTORY_SEPARATOR) // local path, prefix sandbox path
             $folder = SANDBOX_PATH . $folder;
             
         // beautify path
@@ -644,13 +679,14 @@ class SandboxPluginmanager
      * first serve (fifo). If an event handler is subscribed again, its place in
      * the stack is moved to the end.
      *
+     * @param string $eventname   name of event
+     * @param mixed  $pluginclass name of plugin class as string or object instance of plugin class
+     * @param string $method      name of class method which is the event handler
+     *
+     * @return boolean true for success, or false
+     *
      * @access public
      * @since 0.1
-     *
-     * @param string $eventname    name of event
-     * @param mixed  $pluginclass  name of plugin class as string or object instance of plugin class
-     * @param string $method       name of class method which is the event handler
-     * @return boolean true for success, or false
      **/
     public function subscribe($eventname = null, $pluginclass = null, $method = null)
     {
@@ -688,12 +724,13 @@ class SandboxPluginmanager
      * (@see SandboxPluginmanager::subscribe()). It can pass by one optional
      * argument to event handlers.
      *
+     * @param string    $eventname name of event
+     * @param reference &$arg      optional argument passed by to event handlers
+     *
+     * @return array $response stack for responses returned by event handlers
+     *
      * @access public
      * @since 0.1
-     *
-     * @param string    $eventname name of event
-     * @param reference &$arg optional argument passed by to event handlers
-     * @return array $response stack for responses returned by event handlers
      *
      * @todo check for event cycles (and prevent them)
      **/
@@ -760,12 +797,13 @@ class SandboxPluginmanager
      * It opens directory and read all sub directories to add them as plugin
      * folders (@see SandboxPluginmanager::addFolder).
      *
+     * @param string  $folder absolute path name of folder to scan
+     * @param boolean $sub    scan also sub folders? true|false
+     *
+     * @return mixed void or false (directory cannot be opened)
+     *
      * @access private
      * @since 0.1
-     *
-     * @param string $folder absolute path name of folder to scan
-     * @param boolean $sub scan also sub folders? true|false
-     * @return mixed void or false (directory cannot be opened)
      **/
     private function _scan($folder, $sub)
     {
@@ -788,11 +826,12 @@ class SandboxPluginmanager
      * (file|path) name including path of the the first match or false, if it is
      * not found.
      *
+     * @param string $file file ore path name which should be searched for in the plugin environment
+     *
+     * @return mixed absolue path as string or falso, if it is not found or not readable
+     *
      * @access private
      * @since 0.1
-     *
-     * @param string $file file ore path name which should be searched for in the plugin environment
-     * @return mixed absolue path as string or falso, if it is not found or not readable
      **/
     private function _search($file)
     {
@@ -818,6 +857,10 @@ class SandboxPluginmanager
      * Do not use this method directly, please use instead
      * $SandboxPluginmanager->PluginClassName
      *
+     * @param string $plugin plugin name
+     *
+     * @return mixed
+     *
      * @access public
      * @since 0.1
      **/
@@ -838,10 +881,13 @@ class SandboxPluginmanager
  * Use this for your plugin:
  *    class YourPluginClass extends SandboxPlugin { // your stuff }
  *
- * @since       0.1
- * @category    spcms
- * @package     Sandbox-Plugin
- * @module      Sandbox-Includes
+ * @category   SPCMS
+ * @package    Sandbox-Core
+ * @subpackage Sandbox-Plugin
+ * @author     Michael Haschke, eye48.com
+ * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @since      0.1
  * 
  **/
 class SandboxPlugin
@@ -871,33 +917,33 @@ class SandboxPlugin
     public $pm = null;
     
     /**
-     * @var string $_path absolute name of path where file of plugin class is located
+     * @var string $path absolute name of path where file of plugin class is located
      * @access protected
      * @since 0.1
      **/
-    protected $_path = null;
+    protected $path = null;
     
     /**
      * Sandbox Plugin constructor
      *
      * Construstor method, please do not overwrite this method in your plugin class!
      * To run your stuff at instantiation please use the _init method.
-     * @see SandboxPlugin::_init()
+     * {@see SandboxPlugin::_init()}
+     *
+     * @param Sandbox $sandbox    Sandbox object instance
+     * @param string  $pluginpath Absolute path where plugin class is located
      *
      * @access public
      * @since 0.1
-     *
-     * @param Sandbox $sandbox Sandbox object instance
-     * @param string $pluginpath Absolute path where plugin class is located
      **/
-    public function __construct(Sandbox $sandbox, $pluginpath)
+    final public function __construct(Sandbox $sandbox, $pluginpath)
     {
-        $this->_path = rtrim($pluginpath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+        $this->path = rtrim($pluginpath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
         $this->sandbox = $sandbox;
         $this->content = $sandbox->content;
         $this->pm = $sandbox->pm;
         
-        $this->_init();
+        $this->init();
     }
     
     /**
@@ -907,11 +953,12 @@ class SandboxPlugin
      * is called from the constructor method. Please call parent method at
      * first: parent::_init();
      *
+     * @return void
+     *
      * @access protected
      * @since 0.1
-     *
      **/
-    protected function _init()
+    protected function init()
     {
         return;
     }

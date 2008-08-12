@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Sandbox Publisher 0.1 RC1
  *
@@ -9,10 +8,19 @@
  * it is easy to integrate plugins (e.g. to connect a database). It works with
  * virtual files (non existing ones), too.
  *
+ * METADATA
+ *
+ * @category  SPCMS
+ * @package   Sandbox-Core
+ * @author    Michael Haschke @ eye48.com
+ * @copyright 2008 Michael Haschke
+ * @license   http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @version   SVN: $Id$
+ *
  * WEBSITES
  *
- * @link http://sandbox.eye48.com/sandbox-publisher-cms Project Website and Overview
- * @link http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
+ * @link      http://sandbox.eye48.com/sandbox-publisher-cms Project Website and Overview
+ * @link      http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
  *
  * LICENCE
  *
@@ -29,15 +37,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * @link http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- *
- * METADATA
- *
- * @author      Michael Haschke @ eye48.com
- * @copyright   2008 Michael Haschke
- * @category    spcms
- * @version     $Id$
- * @licence     http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link      http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
  *
  **/
 
@@ -53,10 +53,10 @@
  * - get requested file name
  * - flushing the output
  *
- * @package Sandbox-Core
- * @module Sandbox-Loader
- * @access private
- * @since 0.1
+ * @package    Sandbox-Core
+ * @subpackage Sandbox-Loader
+ * @access     private
+ * @since      0.1
  **/
 
 // include default configuration
@@ -64,7 +64,7 @@ require_once 'sandbox.default.php';
 
 // include user configuration if there is one
 if (is_readable('sandbox.user.php')) {
-    require_once 'sandbox.user.php';
+    include_once 'sandbox.user.php';
 }
 
 // include Sandbox class and tools
@@ -113,8 +113,7 @@ try {
 } catch (Exception $e) { // something went wrong
 
     // check current error level
-    if (!isset($production) || $production !== true)
-    {
+    if (!isset($production) || $production !== true) {
         // print out debug message
         echo '<h1>'.$e->getMessage().'</h1>';
         echo '<p>in <strong>'.$e->getFile().'</strong> at line <strong>'.$e->getLine().'</strong>, code <strong>'.$e->getCode().'</strong>.</p>';

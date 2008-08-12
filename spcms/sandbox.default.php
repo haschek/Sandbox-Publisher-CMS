@@ -1,9 +1,16 @@
 <?php
-
 /**
  * Sandbox Publisher - Default configuration
  *
- * @version $Id$
+ * @category SPCMS
+ * @package  Sandbox-Core
+ *
+ * @author   Michael Haschke, eye48.com
+ * @license  http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ *
+ * @version  SVN: $Id$
+ *
+ * @link     http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
  *
  * You may configure everything here, but if you want to update your Sandbox
  * based App/Website easy, it is recommended to set up your own configuration
