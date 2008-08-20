@@ -254,7 +254,7 @@ class Sandbox
      * @since 0.1
      * @access public
      *
-     * @throws Exception 'No template assigned'
+     * @throws Exception 'No template assigned!'
      **/
     public function flush()
     {
@@ -279,6 +279,8 @@ class Sandbox
      *
      * @since 0.1
      * @access public
+     *
+     * @throws Exception 'Template folder not found!'
      **/
     public function templateAddFolder($folder = null)
     {
@@ -290,18 +292,16 @@ class Sandbox
         if (substr($folder, 0, 1) == DIRECTORY_SEPARATOR) {
             // absolute path
             $templatefolder = $folder;
-        } elseif (substr($folder, 0, 1) == '.') {
+        } else {
             // relative path
             $templatefolder = SANDBOX_PATH.$folder;
-        } else {
-            // wrong input
-            return false;
         }
-
-        if (realpath($templatefolder)) {
+        
+        if (is_readable($templatefolder)) {
             $this->templatefolders[$folder] = rtrim(realpath($templatefolder), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
             return true;
         } else {
+            throw new Exception("Template folder '".$templatefolder."' not found!");
             return false;
         }
     }
@@ -323,6 +323,8 @@ class Sandbox
      **/
     public function templateSetName($name = null)
     {
+        $this->templatename = null;
+    
         foreach ($this->templatefolders as $folder) {
             if (is_readable($folder.$name.'.php') && !$this->templatename)
                 $this->templatename = $folder.$name.'.php';
