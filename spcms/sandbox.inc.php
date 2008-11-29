@@ -1,6 +1,6 @@
 <?php
 /**
- * Sandbox Publisher 0.1 RC1
+ * Sandbox Publisher 0.1
  *
  * Sandbox Publisher is a Mini-CMS (Content Management System). It simply can
  * parse files and it routes their content to PHP template files. Sandbox
@@ -78,6 +78,13 @@ class Sandbox
     public $pm = null;
     
     /**
+     * @var SandboxCache $cache Sandbox Cache object class
+     * @access public
+     * @since 0.1
+     **/
+    public $cache = null;
+
+    /**
      * @var array $templatefolders stack of activated folders containing template files
      * @access public
      * @since 0.1
@@ -101,7 +108,7 @@ class Sandbox
     /**
      * Sandbox costructor
      *
-     * The constructor ceates the objects for Sandbox content store and the
+     * The constructor creates the objects for Sandbox content store and the
      * plugin manager/event dispatcher, load plugins and templates.
      * 
      * @param array $config Configuration from sandbox.default|user.php ($c)
@@ -120,6 +127,18 @@ class Sandbox
         
         // create plugin environment
         $this->pm = new SandboxPluginmanager($this);
+        
+        // create cache manager
+        if (isset($config['cache']) && is_array($config['cache']))
+        {
+            $cachemaxage = (isset($config['cache']['age'])) ? $config['cache']['age'] : 0;
+            $cachefolder = (isset($config['cache']['folder'])) ? $config['cache']['folder'] : null;
+            $this->cache = new SandboxCache($cachemaxage, $cachefolder);
+        }
+        else
+        {
+            $this->cache = new SandboxCache();
+        }
         
         // add pluginfolders
         if (isset($config['plugin']['folder']) && is_array($config['plugin']['folder'])
@@ -919,6 +938,13 @@ class SandboxPlugin
     public $pm = null;
     
     /**
+     * @var SandboxCache $cache Sandbox Cache object class
+     * @access public
+     * @since 0.1
+     **/
+    public $cache = null;
+
+    /**
      * @var string $path absolute name of path where file of plugin class is located
      * @access protected
      * @since 0.1
@@ -929,8 +955,8 @@ class SandboxPlugin
      * Sandbox Plugin constructor
      *
      * Construstor method, please do not overwrite this method in your plugin class!
-     * To run your stuff at instantiation please use the _init method.
-     * {@see SandboxPlugin::_init()}
+     * To run your stuff at instantiation please use the init method.
+     * {@see SandboxPlugin::init()}
      *
      * @param Sandbox $sandbox    Sandbox object instance
      * @param string  $pluginpath Absolute path where plugin class is located
@@ -944,6 +970,7 @@ class SandboxPlugin
         $this->sandbox = $sandbox;
         $this->content = $sandbox->content;
         $this->pm = $sandbox->pm;
+        $this->cache = $sandbox->cache;
         
         $this->init();
     }
@@ -953,7 +980,7 @@ class SandboxPlugin
      *
      * Overwrite this method to run your stuff when the plugin is initiated. It
      * is called from the constructor method. Please call parent method at
-     * first: parent::_init();
+     * first: parent::init();
      *
      * @return void
      *
@@ -963,6 +990,528 @@ class SandboxPlugin
     protected function init()
     {
         return;
+    }
+
+}
+
+/**
+ * Sandbox Cache
+ *
+ * This class handles caching for variables and outputs, also content objects
+ * can be cached.
+ *
+ * @category   SPCMS
+ * @package    Sandbox-Core
+ * @subpackage Sandbox-Includes
+ * @author     Michael Haschke, eye48.com
+ * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
+ * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @since      0.1
+ * 
+ **/
+class SandboxCache
+{
+
+    /**
+     * @var int $age the maximum age of a valid cache in seconds
+     * @access protected
+     * @since 0.1
+     **/
+    protected $age = 0; // default: no caching (valid age of 0 seconds)
+    
+    /**
+     * @var string $folder absolute server path to cache folder
+     * @access protected
+     * @since 0.1
+     **/
+    protected $folder = null; // default: no caching in files (no folder)
+    
+    /**
+     * @var array $_memcache caches as array in memory (to speed up double cache operations)
+     * @access private
+     * @since 0.1
+     **/
+    private $_memcache = array();
+    
+    /**
+     * Sandbox Cache costructor
+     *
+     * The constructor method creates the Sandbox Cache object and it sets
+     * configuration for cache folder and maximum age of valid cache files.
+     * 
+     * @param int $maxage maximum age of valid cache files in seconds
+     * @param string $folder path name, absolute or relative to Sandbox Publisher folder
+     *
+     * @return void
+     *
+     * @since 0.1
+     * @access public
+     *
+     **/
+    public function __construct($maxage = 0, $folder = null)
+    {
+        // set valid age for cache files
+        if ($maxage !== 0) $this->setAge($maxage);
+        
+        // set cache folder
+        if ($folder !== null) $this->setFolder($folder);
+    }
+
+    /**
+     * Set maximum age
+     *
+     * Must be used to set the maximum age (in seconds) a cache can have to be valid.
+     *
+     * @param int $age maximum age in seconds
+     *
+     * @return void
+     *
+     * @access public
+     * @since 0.1
+     **/
+    public function setAge($age)
+    {
+        if (is_numeric($age) && intval($age) >= 0) $this->age = intval($age);
+        // TODO: throw exception
+        
+        return;
+    }
+    
+    /**
+     * Set cache folder
+     *
+     * Must be used to set the folder where caches are saved.
+     *
+     * @param string $folder path name, absolute or relative to Sandbox Publisher folder
+     *
+     * @return boolean
+     *
+     * @access public
+     * @since 0.1
+     * 
+     * @throws Exception 'Cannot use folder for cache files!'
+     **/
+    public function setFolder($folder)
+    {
+        if ($folder === null || $folder === '')
+        {
+            // do not cache in files
+            $this->folder = null;
+        }
+        elseif (!$folder || !is_string($folder))
+        {
+            throw new Exception("Cannot use folder for cache files: wrong input!");
+            return false;
+        }
+        else
+        {
+            // relative or absolute path
+            if (substr($folder, 0, 1) != DIRECTORY_SEPARATOR) {
+                // relative path
+                $folder = SANDBOX_PATH.$folder;
+            }
+
+            if (is_dir($folder) && is_writable($folder)) {
+                $this->folder = rtrim(realpath($folder), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+                return true;
+            } else {
+                throw new Exception("Cannot use folder for cache files: Template folder '".$folder."' not found or not writeable!");
+                return false;
+            }
+        }
+    }
+    
+    /**
+     * Write variable to cache
+     *
+     * This method is used to save a variable and its type to a cache file.
+     *
+     * @param mixed $var variable to cache, arrays and objects will be serialized
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return boolean
+     *
+     * @access public
+     * @since 0.1
+     * 
+     * @throws Exception 'Cannot write cache!'
+     **/
+    public function saveVar($var, $name, $namespace = null)
+    {
+        if ($this->age > 0)
+        {
+            // 1. write cache to memory
+            if ($this->_setMemcache($var, $name, $namespace))
+            {
+                if ($this->folder != null)
+                {
+                    // 2. write cache to file
+                    
+                    // serialize (saving var type)
+                    $cachedata = serialize($var);
+                    
+                    // open cache file
+                    $cachename = $this->_createCachename($name, $namespace);
+                    if ($cachename && $cachefile = @fopen($this->folder.$cachename, 'wb'))
+                    {
+                        // success
+                        // write data to file (without magic_quotes)
+                        
+                        // magic quotes off
+                        $q = get_magic_quotes_runtime();
+                        set_magic_quotes_runtime(0);
+                        
+                        // write to file
+                        if (@fwrite($cachefile, $cachedata) === false)
+                        {
+                            // cannot write to file
+                            throw new Exception('Cannot write cache: cannot write into file '.$this->folder.$this->_createCachename($name, $namespace).' !');
+                            return false;
+                        }
+                        
+                        // restore magic quotes configuration 
+                        set_magic_quotes_runtime($q);
+                        
+                        // close cache file
+                        @fclose($cachfile);
+                        
+                        return true;
+                        
+                        // TODO: locking ops? does make it sense? it seems to provoke a lot of errors/problems? see http://www.php.net/manual/de/function.flock.php
+                    }
+                    else
+                    {
+                        // cannot open cache file
+                        throw new Exception('Cannot write cache: cannot open file '.$this->folder.$this->_createCachename($name, $namespace).' to write cache!');
+                        return false;
+                    }
+                }
+                else
+                {
+                    // folder is null, so only write to memcache
+                    return true;
+                }
+            }
+            else
+            {
+                // mem cache must work, so end here
+                return false;
+            }
+        }
+        else
+        {
+            // do not cache anything
+            return false;
+        }
+    }
+    
+    /**
+     * Read variable from cache
+     *
+     * This method is used to read a variable from a cache file. The type will be recovered.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return mixed variable as saved type or null (if not cached)
+     *
+     * @access public
+     * @since 0.1
+     * 
+     * @throws Exception 'Cannot read cache!'
+     **/
+    public function getVar($name, $namespace = null, $maxage = null)
+    {
+
+        if ($maxage === null) $maxage = $this->age;
+        
+        if (intval($maxage) > 0)
+        {
+            // 1. read cache from memory
+            if ($var = $this->_getMemcache($name, $namespace, $maxage))
+            {
+                return $var;
+            }
+            // 2. read cache from file
+            elseif ($this->folder != null)
+            {
+                // open cache file if age is valid
+                $cachename = $this->_createCachename($name, $namespace);
+                if ($cachename)
+                {
+                    // clear file stats from php cache
+                    clearstatcache();
+                    
+                    // test for valid file
+                    if (!is_readable($this->folder.$cachename))
+                    {
+                        // file doesn't exist or is not readable
+                        return false;
+                    }
+                
+                    // test for valid age of cache
+                    if ($maxage < (time() - filemtime($this->folder.$cachename)))
+                    {
+                        // cache too old
+                        return false;
+                    }
+                    
+                    // open cache file
+                    if ($cachefile = @fopen($this->folder.$cachename, 'rb'))
+                    {
+                        // success
+                        // read var from file (without magic_quotes)
+                        
+                        // magic quotes off, backup configuration
+                        $q = get_magic_quotes_runtime();
+                        set_magic_quotes_runtime(0);
+                        
+                        // get file size
+                        $cachesize = filesize($this->folder.$cachename);
+                        
+                        // read cache data
+                        if ($cachesize)
+                        {
+                            $cachedata = @fread($cachefile, $cachesize);
+                            
+                            // unserialize (restore var type)
+                            $var = unserialize($cachedata);
+                
+                        }
+                        else
+                        {
+                            $var = null;
+                        }
+                        
+                        // restore magic quotes configuration 
+                        set_magic_quotes_runtime($q);
+                        
+                        // close cache file
+                        @fclose($cachefile);
+                        
+                        return $var;
+                        
+                        // TODO: locking ops? does make it sense? it seems to provoke a lot of errors/problems? see http://www.php.net/manual/de/function.flock.php
+                    }
+                    else
+                    {
+                        // file name corrup or file not readable
+                        throw new Exception('Cannot read cache: cannot open '.$this->folder.$cachename.' !');
+                        return false;
+                    }
+                }
+                else
+                {
+                    // file name corrup or file not readable
+                    throw new Exception('Cannot read cache: cannot create valid file name from "'.$name.'" with namespace "'.$namespace.'"!');
+                    return false;
+                }
+
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Write output to cache
+     *
+     * This method is used to save an output buffer to a cache file.
+     * All outputs are saved as string variable.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return boolean
+     *
+     * @access public
+     * @since 0.1
+     **/
+    public function saveOutput($name, $namespace = null)
+    {
+        // get output string from saven buffer
+        $output = ob_get_contents();
+        // send output buffer and turn it off
+        ob_end_flush();
+        
+        // save output string to cache
+        return $this->saveVar($output, $name, $namespace);
+    }
+    
+    /**
+     * Get output from cache
+     *
+     * This method is used to read an output buffer from a cache file and print it
+     * out immediately.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return boolean true for successfull output, false if cache not available
+     *
+     * @access public
+     * @since 0.1
+     **/
+    public function getOutput($name, $namespace = null, $maxage = null)
+    {
+        // get cached string and print it out
+        if ($output = $this->getVar($name, $namespace, $maxage))
+        {
+            echo $output;
+            return true;
+        }
+        
+        // or start to save output to buffer
+        ob_start();
+        ob_implicit_flush(false);
+        return false;
+    }
+    
+    /**
+     * Get cache from memory
+     *
+     * This method tries to fetch a cache variable from the intern array saved
+     * in memory.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     * @param int $maxage maximum age in seconds for valid cache
+     *
+     * @return mixed variable (as its type) or false (no valid cache in memory)
+     *
+     * @access private
+     * @since 0.1
+     **/
+    private function _getMemcache($name, $namespace, $maxage)
+    {
+        $validtime = time() - intval($maxage);
+        
+        $cachename = $this->_createCachename($name, $namespace);
+        if ($cachename && array_key_exists($cachename, $this->_memcache))
+        {
+            // cache exists in memory
+            // validate cache against time
+            if ($validtime <= $this->_memcache[$cachename]['time'])
+            {
+                // cache is valid
+                return $this->_memcache[$cachename]['content'];
+            }
+            else
+            {
+                // cache is too old
+                return false;
+            }
+        }
+        else
+        {
+            // name for cache cannot be created
+            return false;
+        }
+        
+    }
+    
+    /**
+     * Write cache into memory
+     *
+     * This method will write a cache variable to the intern array saved in memory.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     * @param int $maxage maximum age in seconds for valid cache
+     *
+     * @return boolean true for success, false if it is not successful
+     *
+     * @access private
+     * @since 0.1
+     **/
+    private function _setMemcache($var, $name, $namespace)
+    {
+        if ($cachename = $this->_createCachename($name, $namespace))
+        {
+            // save var
+            $this->_memcache[$cachename]['content'] = $var;
+            // save time of cache
+            $this->_memcache[$cachename]['time'] = time();
+            
+            return true;
+        }
+        else
+        {
+            // name for cache cannot be created
+            return false;
+        }
+    }
+    
+    /**
+     * Create name for cache file
+     *
+     * This method will create a name for the cache file out of the cache name,
+     * its namespace and a spcms-cache extension.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return mixed name as string (success) or false (no success)
+     *
+     * @access private
+     * @since 0.1
+     **/
+    private function _createCachename($name, $namespace)
+    {
+        if ($space = $this->_checkNamespace($namespace))
+        {
+            // namespace is valid
+            if ($space !== null) $space .= '_-_';
+            return $space.md5($name).'.spcms-cache'; // Better to use extension, maybe cache folder is used by other apps, too.
+        }
+        else
+        {
+            // valid namespace cannot be created
+            return false;
+        }
+    }
+    
+    /**
+     * Validate namespace string
+     *
+     * A namespace must be a alpha-numeric string, so only word- and digit-,
+     * underscore- and minus characters, are allowed. It must start with a word-
+     * or digit character. This method checks if a namespace is valid.
+     *
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return mixed namespace as string or null (success), false (no success)
+     *
+     * @access private
+     * @since 0.1
+     **/
+    private function _checkNamespace($namespace)
+    {
+        if ($namespace === null || $namespace === '')
+        {
+            // no namespace
+            return null;
+        }
+        elseif (is_string($namespace))
+        {
+            // check namespace
+            if (preg_match('/^[\w|\d]+[\w|\d|-|_]*[\w|\d]*$/', $namespace))
+            {
+                // valid namespace, only word- and digit charcters
+                return $namespace;
+            }
+            else
+            {
+                // invalid namespace
+                return false;
+            }
+        }
+        else
+        {
+            // wrong input
+            return false;
+        }
     }
 
 }

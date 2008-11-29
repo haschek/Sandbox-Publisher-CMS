@@ -39,6 +39,10 @@ $c['plugin']['folder'][] = './plugins/';
 // load plugins at start
 // $c['plugin']['load'][] = 'PluginName';
 
+// caching
+// $c['cache']['age'] = 2 * 60 * 60; // cache stuff for 2 hours
+// $c['cache']['folder'] = './../cache/';
+
 /* </SNAP> -- configuration ends here */
 
 ?>
