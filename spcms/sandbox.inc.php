@@ -567,7 +567,6 @@ class SandboxPluginmanager
         $this->_sandbox = $sandbox;
     }
     
-    
     /**
      * Plugin Loader
      *
@@ -612,14 +611,11 @@ class SandboxPluginmanager
 
     }
     
-    /* include a plugin:
-       * include file (require) but do not instanciate class
-       * return absolute path to plugin or false */
     /**
      * Plugin Includer
      *
      * Extract absolute file name of plugin by search in assigned plugin folders
-     * (@see SandboxPluginmanager::_search()) and includes it.
+     * (@see SandboxPluginmanager::_search()) and includes plugin code.
      *
      * @param string $pluginname Plugin name relative to one of the stored plugin folders (without .php)
      *
@@ -768,8 +764,6 @@ class SandboxPluginmanager
 
         $handlerStack = $this->_subscriptions[$eventname];
         sort($handlerStack, SORT_NUMERIC);
-        //debug echo '<div><pre>';print_r($this->_subscriptions);echo '</pre></div>';
-        //debug print_r($handlerStack);
         
         foreach ($handlerStack as $eventhandler) {
             
@@ -791,7 +785,6 @@ class SandboxPluginmanager
 
                 try {
                     $r = null;
-                    //debug echo '<p>$r = '.get_class($pluginclass).'->'.$eventhandler['method'].'($arg);</p>';
                     eval('$r = $pluginclass->'.$eventhandler['method'].'($arg);');
                     $response[$i] = $r;
                 } catch (Exception $e) {
@@ -803,14 +796,6 @@ class SandboxPluginmanager
         
         return $response;
     }
-    
-    /* init environment */
-    /*
-    private function _init()
-    {
-    
-    }
-    */
     
     /**
      * Folder scanner
@@ -1176,9 +1161,18 @@ class SandboxCache
                         // close cache file
                         @fclose($cachfile);
                         
+                        /* EVENT sandbox_write_cache_to_file
+                         * @param Array    
+                         */
+                        $this->pm->publish('sandbox_write_cache_to_file',
+                                           array('name'=>$name, 'namespace'=>$namespace, 'file'=>$cachefile, 'data'=>$cachedata));
+
                         return true;
                         
-                        // TODO: locking ops? does make it sense? it seems to provoke a lot of errors/problems? see http://www.php.net/manual/de/function.flock.php
+                        /* TODO: locking operations? does make it sense?
+                           It seems to provoke a lot of errors/problems?
+                           see http://www.php.net/manual/de/function.flock.php
+                        */
                     }
                     else
                     {
@@ -1290,20 +1284,29 @@ class SandboxCache
                         // close cache file
                         @fclose($cachefile);
                         
+                        /* EVENT sandbox_read_cache_from_file
+                         * @param Array    
+                         */
+                        $this->pm->publish('sandbox_read_cache_from_file',
+                                           array('name'=>$name, 'namespace'=>$namespace, 'file'=>$cachefile, 'data'=>$cachedata));
+
                         return $var;
                         
-                        // TODO: locking ops? does make it sense? it seems to provoke a lot of errors/problems? see http://www.php.net/manual/de/function.flock.php
+                        /* TODO: locking operations? does make it sense?
+                           It seems to provoke a lot of errors/problems?
+                           see http://www.php.net/manual/de/function.flock.php
+                        */
                     }
                     else
                     {
-                        // file name corrup or file not readable
+                        // file name corrupt or file not readable
                         throw new Exception('Cannot read cache: cannot open '.$this->folder.$cachename.' !');
                         return false;
                     }
                 }
                 else
                 {
-                    // file name corrup or file not readable
+                    // cannot create name for cache file
                     throw new Exception('Cannot read cache: cannot create valid file name from "'.$name.'" with namespace "'.$namespace.'"!');
                     return false;
                 }
@@ -1356,7 +1359,7 @@ class SandboxCache
     public function getOutput($name, $namespace = null, $maxage = null)
     {
         // get cached string and print it out
-        if ($output = $this->getVar($name, $namespace, $maxage))
+        if ($output = $this->getVar($name, $namespace, $maxage) && $output !== false)
         {
             echo $output;
             return true;
