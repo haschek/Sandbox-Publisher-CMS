@@ -19,18 +19,14 @@
 
     ### Redirect all other stuff the Sandbox
     ### read bottom-up
-    # -- uncomment/edit -- AND only for HTML files
-    # -- uncomment/edit -- RewriteCond %{REQUEST_URI} \.html$ [NC]
-    # AND not for PHP files
-    RewriteCond %{REQUEST_FILENAME} !\.php$ [NC]
-    # OR for not existing files
-    RewriteCond %{REQUEST_FILENAME} !-f [OR]
-    # OR for real files
-    RewriteCond %{REQUEST_FILENAME} -F [OR]
-    # OR for real directories
-    RewriteCond %{REQUEST_FILENAME} -d [OR]
-    # for not existing directories
-    RewriteCond %{REQUEST_FILENAME} !-d [OR]
+    # AND only for HTM(L) files
+    RewriteCond %{REQUEST_URI} \.html$ [NC]
+    # --edit-- # OR for not existing files
+    # --edit-- RewriteCond %{REQUEST_FILENAME} !-f [OR]
+    # for real files
+    RewriteCond %{REQUEST_FILENAME} -F
+
     # Redirect to Sandbox Publisher
     RewriteRule . /path/to/sandbox.php [L,QSA]
+
 </IfModule>
