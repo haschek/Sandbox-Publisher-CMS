@@ -120,6 +120,8 @@ try {
         echo '<pre>'.$e->getTraceAsString().'</pre>';
     }
     
+    // TODO: else: send server error (what number? must check.)
+    
     die();
 }
 

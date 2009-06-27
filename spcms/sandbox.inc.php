@@ -231,15 +231,12 @@ class Sandbox
                     $php = false;
                     // execute php code
                     if (trim($phpcode)) eval(trim($phpcode));
-                } elseif (preg_match('/^\{([a-z|A-Z]+[0-9]*)\}$/', $line, $varmatch)) { // regex for {Varname111}
+                } elseif (preg_match('/^\{([a-z|A-Z]+[0-9]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
                     $varKey = $varmatch[1];
-                    //$varValue = null; // set empty var
                 } else {
                     if ($php === true) {
                         $phpcode .= $line;
                     } elseif ($varKey) {
-                        //$varValue .= $line;
-                        //$this->content->$varKey = trim($varValue);
                         $this->content->$varKey .= $line;
                     }
                 }
@@ -587,25 +584,26 @@ class SandboxPluginmanager
     {
         if (!$pluginname || !is_string($pluginname)) return false;
         
-        if (!isset($this->_plugins[$pluginname])) {
+        // TODO: better work with foldername_pluginname to get really distinct names for plugin classes
+        // get class name (because pluginname could be 'foldername/pluginname')
+        $elements = explode(DIRECTORY_SEPARATOR, $pluginname);
+        $lastElementIndex = count($elements) - 1;
+        $classname = $elements[$lastElementIndex];
+    
+        if (!isset($this->_plugins[$classname])) {
             // plugin is not active, load it
             if ($pluginpath = $this->need($pluginname)) {
             
-                // get class name (because pluginname could be 'foldername/pluginname')
-                $elements = explode(DIRECTORY_SEPARATOR, $pluginname);
-                $lastElementIndex = count($elements) - 1;
-                $classname = $elements[$lastElementIndex];
-            
-                eval('$this->_plugins["'.$pluginname.'"] = new '.$classname.'($this->_sandbox, $pluginpath);');
+                eval('$this->_plugins["'.$classname.'"] = new '.$classname.'($this->_sandbox, $pluginpath);');
             }
         }
         
         // plugin should be active now
         
-        if (isset($this->_plugins[$pluginname])) {
-            return $this->_plugins[$pluginname];
+        if (isset($this->_plugins[$classname])) {
+            return $this->_plugins[$classname];
         } else {
-            throw new Exception('Plugin \''.$pluginname.'\' is not available!');
+            throw new Exception('Plugin \''.$classname.'\' is not available!');
             return false;
         }
 
