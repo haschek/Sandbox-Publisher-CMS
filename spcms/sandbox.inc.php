@@ -231,7 +231,7 @@ class Sandbox
                     $php = false;
                     // execute php code
                     if (trim($phpcode)) eval(trim($phpcode));
-                } elseif (preg_match('/^\{([a-z|A-Z]+[0-9]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
+                } elseif (preg_match('/^\{([a-z|A-Z]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
                     $varKey = $varmatch[1];
                 } else {
                     if ($php === true) {
@@ -275,7 +275,17 @@ class Sandbox
     public function flush()
     {
         if ($this->templatename) {
+
+            /* EVENT sandbox_flush_start
+             */
+            $this->pm->publish('sandbox_flush_start');
+
             include_once $this->templatename;
+
+            /* EVENT sandbox_flush_end
+             */
+            $this->pm->publish('sandbox_flush_end');
+
             return true;
         } else {
             throw new Exception("No template assigned!");
@@ -399,7 +409,7 @@ class SandboxContent
      * @access private
      * @since 0.1
      **/
-    private $_c = array();
+    protected $_c = array();
     
     /**
      * Sandbox Content contructor
@@ -488,6 +498,12 @@ class SandboxContent
     {
         unset($this->_c[$var]);
         return;
+    }
+    
+    // TODO: comment this
+    public function getKeys()
+    {
+        return array_keys($this->_c);
     }
 }
 
@@ -871,6 +887,12 @@ class SandboxPluginmanager
     public function __get($plugin)
     {
         return $this->load($plugin);
+    }
+    
+    // TODO: comment this
+    public function countActivePlugins()
+    {
+        return count($this->_plugins);
     }
 }
 
