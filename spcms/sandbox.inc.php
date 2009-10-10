@@ -101,6 +101,13 @@ class Sandbox
      **/
     public $templatename = null;
     
+    /**
+     * @var string $layoutname layout file name, absolute path
+     * @access public
+     * @since 0.1
+     **/
+    public $layoutname = null;
+    
     // maybe we need this later
     // config
     // private var $_config = array();
@@ -173,6 +180,11 @@ class Sandbox
             }
         }
         
+        // set layout
+        if (isset($config['template']['layout']) && $config['template']['layout']) {
+            $this->templateSetLayout($config['template']['layout']);
+        }
+            
         // set template
         if (isset($config['template']['name']) && $config['template']['name']) {
             $this->templateSetName($config['template']['name']);
@@ -280,7 +292,15 @@ class Sandbox
              */
             $this->pm->publish('sandbox_flush_start');
 
-            include_once $this->templatename;
+            // check for layout
+            if ($this->layoutname)
+            {
+                $this->runninglayout = true;
+                include_once $this->layoutname;
+            } else {
+                // no layout defined
+                include_once $this->templatename;
+            }
 
             /* EVENT sandbox_flush_end
              */
@@ -289,6 +309,33 @@ class Sandbox
             return true;
         } else {
             throw new Exception("No template assigned!");
+            return false;
+        }
+    }
+    
+    /**
+     * Template output
+     *
+     * Runs the PHP template file to print out the content from inside a layout
+     * template.
+     *
+     * @return boolean true for template has been included
+     *
+     * @since 0.1
+     * @access public
+     *
+     * @throws Exception 'Using output() method is only allowed in a layout template!'
+     **/
+    private function output()
+    {
+        // test for calling this from a layout template
+        if (isset($this->runninglayout) && $this->runninglayout === true)
+        {
+            unset($this->runninglayout);
+            include_once $this->templatename;
+            return true;
+        } else {
+            throw new Exception("Using output() method is only allowed in a layout template!");
             return false;
         }
     }
@@ -336,7 +383,8 @@ class Sandbox
      * Set template name
      *
      * Search the name of the template in the folders which are stored in the
-     * template folder stack (@see Sandbox::templateAddFolder).
+     * template folder stack (@see Sandbox::templateAddFolder) and save it. A
+     * template defines the output for the content.
      *
      * @param string $name name of template file without extension (.php)
      *
@@ -362,6 +410,39 @@ class Sandbox
         }
         
         return $this->templatename;
+    }
+    
+    /**
+     * Set layout
+     *
+     * Search the name of the layout template in the folders which are stored in
+     * the template folder stack (@see Sandbox::templateAddFolder) and save it.
+     * A layout defines the outer sleeve output beyond the specific template.
+     *
+     * @param string $name name of th layout template without extension (.php)
+     *
+     * @return string absolute file name of layout inclusive extension
+     *
+     * @since 0.1
+     * @access public
+     *
+     * @throws Exception 'Layout %name% was not found or is not readable.'
+     **/
+    public function templateSetLayout($name = null)
+    {
+        $this->layoutname = null;
+    
+        foreach ($this->templatefolders as $folder) {
+            if (is_readable($folder.$name.'.php') && !$this->layoutname)
+                $this->layoutname = $folder.$name.'.php';
+        }
+        
+        if (!$this->layoutname) {
+            throw new Exception("Layout '".$name."' was not found or is not readable.");
+            return false;
+        }
+        
+        return $this->layoutname;
     }
     
     /**

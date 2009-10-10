@@ -13,7 +13,7 @@
  * @link     http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
  *
  * You may configure everything here, but if you want to update your Sandbox
- * based App/Website easy, it is recommended to set up your own configuration
+ * based App/Website easily, it is recommended to set up your own configuration
  * file 'sandbox.user.php' and store it to the same folder like this configuration
  * is located.
  *
@@ -31,6 +31,7 @@ $production = false;
 $c['template']['folder'][] = './templates/';
 
 // templates
+$c['template']['layout'] = 'global.tpl';
 $c['template']['name'] = 'default.tpl';
 
 // plugin folders
