@@ -814,16 +814,51 @@ class SandboxPluginmanager
         } else {
             return false;
         }
+        
+        // if event handler is on event stack then delete old position first
+        $this->unsubscribe($eventname, $classname, $method);
+        
+        // add event handler to event stack
+        $this->_subscriptions[$eventname][] = array('class'=>$classname,'method'=>$method);
+        
+        return true;
     
+    }
+    
+    /**
+     * Event unsubscriber
+     *
+     * Use this method to unsubscribe event handlers from events.
+     *
+     * @param string $eventname   name of event
+     * @param mixed  $pluginclass name of plugin class as string or object instance of plugin class
+     * @param string $method      name of class method which is the event handler
+     *
+     * @return boolean true for success, or false
+     *
+     * @access public
+     * @since 0.1
+     **/
+    public function unsubscribe($eventname = null, $pluginclass = null, $method = null)
+    {
+        if (!$eventname || !is_string($eventname)) return false;
+        if (!$pluginclass) return false;
+        if (!$method || !is_string($method)) return false;
+        
+        if (is_string($pluginclass)) {
+            $classname = $pluginclass;
+        } elseif (is_object($pluginclass)) {
+            $classname = get_class($pluginclass);
+        } else {
+            return false;
+        }
+
         if (isset($this->_subscriptions[$eventname]) &&
             (false !== $stackIndex = array_search(array('class'=>$classname,'method'=>$method), $this->_subscriptions[$eventname]))) {
         
             // event handler is on stack for event, delete it
             unset($this->_subscriptions[$eventname][$stackIndex]);
         }
-        
-        $this->_subscriptions[$eventname][] = array('class'=>$classname,'method'=>$method);
-        //debug echo '<div><pre>';print_r($this->_subscriptions);echo '</pre></div>';
         
         return true;
     
