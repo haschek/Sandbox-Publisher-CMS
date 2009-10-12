@@ -221,6 +221,7 @@ class Sandbox
      * on the fly.
      *
      * @param string $file absolute file name
+     * @param boolean $eval evaluate PHP code
      *
      * @return boolean true for file has been parsed, falso for file not found
      *
@@ -231,7 +232,7 @@ class Sandbox
      * @publish event sandbox_parse_end
      * @publish event sandbox_parse_failed
      **/
-    public function parse($file)
+    public function parse($file, $eval = true)
     {
         $php = false;
         $phpcode = null;
@@ -255,7 +256,7 @@ class Sandbox
                 } elseif (rtrim($line) == '?>') {
                     $php = false;
                     // execute php code
-                    if (trim($phpcode)) eval(trim($phpcode));
+                    if (trim($phpcode) && $eval) eval(trim($phpcode));
                 } elseif (preg_match('/^\{([a-z|A-Z]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
                     $varKey = $varmatch[1];
                 } else {
