@@ -64,6 +64,13 @@
 class Sandbox
 {
     /**
+     * @var $config Sandbox configuration array from config file
+     * @access protected
+     * @since 0.1
+     **/
+    private $config = array();
+    
+    /**
      * @var SandboxContent $content Sandbox content object which stores all assigned content variables
      * @access public
      * @since 0.1
@@ -129,6 +136,12 @@ class Sandbox
      **/
     public function __construct($config)
     {
+        // configuration must be stored in a array
+        if (!is_array($config)) $config = array();
+
+        // save configuration
+        $this->config = $config;
+
         // create content object
         $this->content = new SandboxContent();
         
@@ -466,6 +479,43 @@ class Sandbox
         echo $this->content->$var;
     }
     
+    /**
+     * Get configuration
+     *
+     * @return array configuration
+     *
+     * @since 0.1
+     * @access public
+     **/
+    public function getConfig()
+    {
+        return $this->config;
+    }
+    
+    /**
+     * Magic method to call a non existing method
+     *
+     * Calls of non existing methods will lead to triggering an event, the
+     * event name is dynamically created with 'sandbox_'+methodname+'_call'
+     *
+     * @param string $name name of method
+     * @param array  $args arguments
+     *
+     * @return void
+     *
+     * @since 0.1
+     * @access private
+     *
+     * @publish event sandbox_'methodname'_call
+     **/
+    public function __call($name, $args)
+    {
+        /* EVENT sandbox_'methodname'_call
+        * @param array $args arguments for called method
+        */
+        return $this->pm->publish('sandbox_'.$name.'_call', $args);
+    }
+
 }
 
 /**
