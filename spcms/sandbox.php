@@ -59,6 +59,23 @@
  * @since      0.1
  **/
 
+// define sandbox path
+define('SANDBOX_PATH', rtrim(dirname(__FILE__), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+
+// define document's root path'
+define('DOCUMENT_ROOT', rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+
+// get used protocoll http(s)
+if (!isset($_SERVER['HTTPS']) || !$_SERVER['HTTPS'] || $_SERVER['HTTPS'] == 'off') {
+    $prot = 'http://';
+} else {
+    $prot = 'https://';
+}
+// define webserver base dir (URL)
+define('SERVER_BASE', $prot.rtrim($_SERVER['SERVER_NAME'], DIRECTORY_SEPARATOR).'/');
+// define sandbox base dir (URL)
+define('SANDBOX_BASE', SERVER_BASE.str_replace(DOCUMENT_ROOT, '', SANDBOX_PATH));
+
 // include default configuration
 require_once 'sandbox.default.php';
 
@@ -69,20 +86,6 @@ if (is_readable('sandbox.user.php')) {
 
 // include Sandbox class and tools
 require_once 'sandbox.inc.php';
-
-// define sandbox path
-define('SANDBOX_PATH', rtrim(dirname(__FILE__), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
-
-// define document's root path'
-define('DOCUMENT_ROOT', rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
-
-// define sandbox base dir (URL)
-if (!isset($_SERVER['HTTPS']) || !$_SERVER['HTTPS'] || $_SERVER['HTTPS'] == 'off') {
-    $prot = 'http://';
-} else {
-    $prot = 'https://';
-}
-define('SANDBOX_BASE', $prot.rtrim($_SERVER['SERVER_NAME'], DIRECTORY_SEPARATOR).str_replace(DOCUMENT_ROOT, '/', SANDBOX_PATH));
 
 // get requested filename
 if (strpos($_SERVER['REQUEST_URI'], '?') !== false) {

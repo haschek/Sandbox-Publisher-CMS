@@ -71,6 +71,13 @@ class Sandbox
     private $config = array();
     
     /**
+     * @var $file last file which was parsed successfully
+     * @access public
+     * @since 0.1
+     **/
+    public $file = null;
+    
+    /**
      * @var SandboxContent $content Sandbox content object which stores all assigned content variables
      * @access public
      * @since 0.1
@@ -273,6 +280,7 @@ class Sandbox
              */
             $this->pm->publish('sandbox_parse_end', $file);
             
+            $this->file = $file;
             return true;
 
         } else {
