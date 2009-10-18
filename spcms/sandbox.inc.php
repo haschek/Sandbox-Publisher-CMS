@@ -264,7 +264,7 @@ class Sandbox
                     $php = false;
                     // execute php code
                     if (trim($phpcode) && $eval) eval(trim($phpcode));
-                } elseif (preg_match('/^\{([a-z|A-Z]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
+                } elseif (preg_match('/^\{([a-z|A-Z|0-9]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
                     $varKey = $varmatch[1];
                 } else {
                     if ($php === true) {
