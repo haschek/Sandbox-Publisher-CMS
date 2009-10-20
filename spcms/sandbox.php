@@ -88,10 +88,20 @@ if (is_readable('sandbox.user.php')) {
 require_once 'sandbox.inc.php';
 
 // get requested filename
-if (strpos($_SERVER['REQUEST_URI'], '?') !== false) {
-    $file = rtrim(DOCUMENT_ROOT, DIRECTORY_SEPARATOR).substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?'));
+
+if (isset($_SERVER['REDIRECT_URL']))
+{
+    $request = $_SERVER['REDIRECT_URL'];
+}
+elseif (isset($_SERVER['REQUEST_URI']))
+{
+    $request = $_SERVER['REQUEST_URI'];
+}
+
+if (strpos($request, '?') !== false) {
+    $file = rtrim(DOCUMENT_ROOT, DIRECTORY_SEPARATOR).substr($request, 0, strpos($request, '?'));
 } else {
-    $file = rtrim(DOCUMENT_ROOT, DIRECTORY_SEPARATOR).$_SERVER['REQUEST_URI'];
+    $file = rtrim(DOCUMENT_ROOT, DIRECTORY_SEPARATOR).$request;
 }
 
 // set error level
