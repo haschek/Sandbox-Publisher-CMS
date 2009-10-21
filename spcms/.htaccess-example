@@ -1,0 +1,35 @@
+# Sandbox Publisher
+# .htaccess
+#
+# @author Michael Haschke @ eye48.com
+# @version $Id$
+
+# please replace '/path/to/sandbox.php' by
+# the location of sandbox.php on your server (base url)
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    ### Redirect requested web folder to URI with ending slash
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_URI} !/$
+    RewriteRule . %{REQUEST_URI}/ [R=permanent,L,QSA]
+
+    ### Redirect all other stuff the Sandbox
+    ### read bottom-up
+    # AND only for HTM(L) files
+    RewriteCond %{REQUEST_URI} \.html$ [NC]
+    # --edit-- # OR for not existing files
+    # --edit-- RewriteCond %{REQUEST_FILENAME} !-f [OR]
+    # for real files
+    RewriteCond %{REQUEST_FILENAME} -F
+
+    # Redirect to Sandbox Publisher
+    RewriteRule . /path/to/sandbox.php [L,QSA]
+    # Fallback for PHP running as CGI
+    # RewriteRule . /path/to/sandbox.php?request=%{REQUEST_URI} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L,QSA]
+
+</IfModule>
+

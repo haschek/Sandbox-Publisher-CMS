@@ -89,7 +89,11 @@ require_once 'sandbox.inc.php';
 
 // get requested filename
 
-if (isset($_SERVER['REDIRECT_URL']))
+if (isset($_GET['request']))
+{
+    $request = $_GET['request'];
+}
+elseif (isset($_SERVER['REDIRECT_URL']) && substr($_SERVER['REDIRECT_URL'], -1 * strlen('sandbox.php')) != 'sandbox.php')
 {
     $request = $_SERVER['REDIRECT_URL'];
 }
