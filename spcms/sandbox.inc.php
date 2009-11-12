@@ -239,7 +239,7 @@ class Sandbox
      * @publish event sandbox_parse_end
      * @publish event sandbox_parse_failed
      **/
-    public function parse($file, $eval = true)
+    public function parse($file, $eval = true, $expand = true)
     {
         $php = false;
         $phpcode = null;
@@ -266,6 +266,10 @@ class Sandbox
                     if (trim($phpcode) && $eval) eval(trim($phpcode));
                 } elseif (preg_match('/^\{([a-z|A-Z|0-9]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
                     $varKey = $varmatch[1];
+                    if ((isset($this->content->$varKey) && $expand === false))
+                    {
+                        $varKey = null;
+                    }
                 } else {
                     if ($php === true) {
                         $phpcode .= $line;
