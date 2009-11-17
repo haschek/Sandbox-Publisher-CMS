@@ -423,13 +423,8 @@ class Sandbox
      **/
     public function templateSetName($name = null)
     {
-        $this->templatename = null;
+        $this->templatename = $this->templateSearch($name);
     
-        foreach ($this->templatefolders as $folder) {
-            if (is_readable($folder.$name.'.php') && !$this->templatename)
-                $this->templatename = $folder.$name.'.php';
-        }
-        
         if (!$this->templatename) {
             throw new Exception("Template '".$name."' was not found or is not readable.");
             return false;
@@ -456,19 +451,46 @@ class Sandbox
      **/
     public function templateSetLayout($name = null)
     {
-        $this->layoutname = null;
+        $this->layoutname = $this->templateSearch($name);
     
-        foreach ($this->templatefolders as $folder) {
-            if (is_readable($folder.$name.'.php') && !$this->layoutname)
-                $this->layoutname = $folder.$name.'.php';
-        }
-        
         if (!$this->layoutname) {
             throw new Exception("Layout '".$name."' was not found or is not readable.");
             return false;
         }
         
         return $this->layoutname;
+    }
+    
+    /**
+     *
+     **/
+    public function templatePartial($name = null)
+    {
+        if ($tpl = $this->templateSearch($name)) {
+            include $tpl;
+        } else {
+            throw new Exception("Template '".$name."' was not found or is not readable.");
+            return false;
+        }
+        
+        return $tpl;
+    }
+
+    /**
+     *
+     **/
+    public function templateSearch($name = null)
+    {
+        $tpl = null;
+    
+        foreach ($this->templatefolders as $folder) {
+            if (is_readable($folder.$name.'.php')) {
+                $tpl = $folder.$name.'.php';
+                break;
+            }
+        }
+        
+        return $tpl;
     }
     
     /**
@@ -489,7 +511,7 @@ class Sandbox
      **/
     public function show($var)
     {
-        echo $this->content->$var;
+        echo trim($this->content->$var);
     }
     
     /**

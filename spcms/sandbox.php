@@ -77,11 +77,11 @@ define('SERVER_BASE', $prot.rtrim($_SERVER['SERVER_NAME'], DIRECTORY_SEPARATOR).
 define('SANDBOX_BASE', SERVER_BASE.str_replace(DOCUMENT_ROOT, '', SANDBOX_PATH));
 
 // include default configuration
-require_once 'sandbox.default.php';
+require_once SANDBOX_PATH.'sandbox.default.php';
 
 // include user configuration if there is one
-if (is_readable('sandbox.user.php')) {
-    include_once 'sandbox.user.php';
+if (is_readable(SANDBOX_PATH.'sandbox.user.php')) {
+    include_once SANDBOX_PATH.'sandbox.user.php';
 }
 
 // include Sandbox class and tools
