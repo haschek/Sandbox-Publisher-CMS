@@ -76,14 +76,6 @@ define('SERVER_BASE', $prot.rtrim($_SERVER['SERVER_NAME'], DIRECTORY_SEPARATOR).
 // define sandbox base dir (URL)
 define('SANDBOX_BASE', SERVER_BASE.str_replace(DOCUMENT_ROOT, '', SANDBOX_PATH));
 
-// include default configuration
-require_once SANDBOX_PATH.'sandbox.default.php';
-
-// include user configuration if there is one
-if (is_readable(SANDBOX_PATH.'sandbox.user.php')) {
-    include_once SANDBOX_PATH.'sandbox.user.php';
-}
-
 // include Sandbox class and tools
 require_once 'sandbox.inc.php';
 
@@ -118,6 +110,9 @@ if (isset($production) && $production === true) {
     // show all tiny errors and warnings
     error_reporting(E_ALL | E_STRICT);
 }
+
+// check configuration
+if (!isset($c)) $c = array();
 
 // run Sandbox
 try {
