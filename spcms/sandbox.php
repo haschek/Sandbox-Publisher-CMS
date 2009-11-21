@@ -85,7 +85,7 @@ if (isset($_GET['request']))
 {
     $request = $_GET['request'];
 }
-elseif (isset($_SERVER['REDIRECT_URL']) && substr($_SERVER['REDIRECT_URL'], -1 * strlen('sandbox.php')) != 'sandbox.php')
+elseif (isset($_SERVER['REDIRECT_URL']) && substr($_SERVER['REDIRECT_URL'], -1 * strlen('index.php')) != 'index.php')
 {
     $request = $_SERVER['REDIRECT_URL'];
 }
