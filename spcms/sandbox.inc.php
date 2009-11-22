@@ -77,7 +77,15 @@ class Sandbox
      **/
     public $file = null;
     
-    /**
+     /**
+     * @var $parsed signals that a file was already parsed, intented for plugins
+     * to prevent parsing 
+     * @access public
+     * @since 0.1
+     **/
+    public $parsed = false;
+    
+   /**
      * @var SandboxContent $content Sandbox content object which stores all assigned content variables
      * @access public
      * @since 0.1
@@ -244,8 +252,9 @@ class Sandbox
         $php = false;
         $phpcode = null;
         $varmatch = array();
-        $varKey = null;
+        $varKey = 'SANDBOX';
         $varValue = null;
+        $this->parsed = false;
     
         if (is_file($file) && !is_dir($file) && is_readable($file)) {
         
@@ -253,38 +262,44 @@ class Sandbox
              * @param String    $file   name of file (server path)
              */
             $this->pm->publish('sandbox_parse_start', $file);
-        
-            // file_get_contents
-            $content = file($file);
-            foreach ($content as $line) {
-                if (rtrim($line) == '<?php') {
-                    $php = true;
-                    $phpcode = null;
-                } elseif (rtrim($line) == '?>') {
-                    $php = false;
-                    // execute php code
-                    if (trim($phpcode) && $eval) eval(trim($phpcode));
-                } elseif (preg_match('/^\{([a-z|A-Z|0-9]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
-                    $varKey = $varmatch[1];
-                    if ((isset($this->content->$varKey) && $expand === false))
-                    {
-                        $varKey = null;
-                    }
-                } else {
-                    if ($php === true) {
-                        $phpcode .= $line;
-                    } elseif ($varKey) {
-                        $this->content->$varKey .= $line;
+            
+            // testing $parsed, plugin may set it to prevent parsing
+            if ($this->parsed === false) {
+            
+                // file_get_contents
+                $content = file($file);
+                foreach ($content as $line) {
+                    if (rtrim($line) == '<?php') {
+                        $php = true;
+                        $phpcode = null;
+                    } elseif (rtrim($line) == '?>') {
+                        $php = false;
+                        // execute php code
+                        if (trim($phpcode) && $eval) eval(trim($phpcode));
+                    } elseif (preg_match('/^\{([a-z|A-Z|0-9]+[a-z|A-Z|0-9|_]*)\}$/', trim($line), $varmatch)) { // regex for {Varname111}
+                        $varKey = $varmatch[1];
+                        if ((isset($this->content->$varKey) && $expand === false))
+                        {
+                            $varKey = null;
+                        }
+                    } else {
+                        if ($php === true) {
+                            $phpcode .= $line;
+                        } elseif ($varKey) {
+                            $this->content->$varKey .= $line;
+                        }
                     }
                 }
-            }
 
-            /* EVENT sandbox_parse_end
-             * @param String    $file   name of file (server path)
-             */
-            $this->pm->publish('sandbox_parse_end', $file);
-            
-            $this->file = $file;
+                $this->file = $file;
+                $this->parsed = true;
+
+                /* EVENT sandbox_parse_end
+                 * @param String    $file   name of file (server path)
+                 */
+                $this->pm->publish('sandbox_parse_end', $file);
+            }
+        
             return true;
 
         } else {
@@ -462,7 +477,19 @@ class Sandbox
     }
     
     /**
+     * Include partial template
      *
+     * A partial template can be used several times, best used for same outputs
+     * with different data.
+     *
+     * @param string $name name of template file without extension (.php)
+     *
+     * @return string absolute file name of template inclusive extension
+     *
+     * @since 0.1
+     * @access public
+     *
+     * @throws Exception 'Template %name% was not found or is not readable.'
      **/
     public function templatePartial($name = null)
     {
@@ -477,7 +504,16 @@ class Sandbox
     }
 
     /**
+     * Search a template
      *
+     * It searchs the template in folders from template folder stack.
+     *
+     * @param string $name name of template file without extension (.php)
+     *
+     * @return string absolute file name of template inclusive extension
+     *
+     * @since 0.1
+     * @access public
      **/
     public function templateSearch($name = null)
     {

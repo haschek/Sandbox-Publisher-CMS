@@ -4,8 +4,8 @@
 # @author Michael Haschke @ eye48.com
 # @version $Id$
 
-# please replace '/path/to/sandbox.php' by
-# the location of sandbox.php on your server (base url)
+# please replace '/path/to/index.php' by
+# the location of the bootstrap file on your server (base url)
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -27,9 +27,9 @@
     RewriteCond %{REQUEST_FILENAME} -F
 
     # Redirect to Sandbox Publisher
-    RewriteRule . /path/to/sandbox.php [L,QSA]
+    RewriteRule . /path/to/index.php [L,QSA]
     # Fallback for PHP running as CGI
-    # RewriteRule . /path/to/sandbox.php?request=%{REQUEST_URI} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L,QSA]
+    # RewriteRule . /path/to/index.php?request=%{REQUEST_URI} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L,QSA]
 
 </IfModule>
 
