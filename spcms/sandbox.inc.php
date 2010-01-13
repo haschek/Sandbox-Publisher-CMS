@@ -168,7 +168,8 @@ class Sandbox
         {
             $cachemaxage = (isset($config['cache']['age'])) ? $config['cache']['age'] : 0;
             $cachefolder = (isset($config['cache']['folder'])) ? $config['cache']['folder'] : null;
-            $this->cache = new SandboxCache($cachemaxage, $cachefolder);
+            $cachetshift = (isset($config['cache']['displacement'])) ? $config['cache']['displacement'] : 0;
+            $this->cache = new SandboxCache($cachemaxage, $cachefolder, $cachetshift);
         }
         else
         {
@@ -491,8 +492,10 @@ class Sandbox
      *
      * @throws Exception 'Template %name% was not found or is not readable.'
      **/
-    public function templatePartial($name = null)
+    public function templatePartial($name = null, $vars = array())
     {
+        extract($vars, EXTR_PREFIX_INVALID, 'var');
+    
         if ($tpl = $this->templateSearch($name)) {
             include $tpl;
         } else {
@@ -518,13 +521,23 @@ class Sandbox
     public function templateSearch($name = null)
     {
         $tpl = null;
-    
-        foreach ($this->templatefolders as $folder) {
-            if (is_readable($folder.$name.'.php')) {
-                $tpl = $folder.$name.'.php';
-                break;
+        
+        if (substr($name, 0, 1) == DIRECTORY_SEPARATOR) {
+            // check absolute template name
+            if (is_readable($name.'.php')) {
+                $tpl = $name.'.php';
+            }
+            
+        } else {
+            // search relative template name in temp dirs from folder stack
+            foreach ($this->templatefolders as $folder) {
+                if (is_readable($folder.$name.'.php')) {
+                    $tpl = $folder.$name.'.php';
+                    break;
+                }
             }
         }
+    
         
         return $tpl;
     }
@@ -706,6 +719,12 @@ class SandboxContent
     public function getKeys()
     {
         return array_keys($this->_c);
+    }
+    
+    //
+    public function getArray()
+    {
+        return $this->_c;
     }
 }
 
@@ -1262,6 +1281,15 @@ class SandboxCache
     protected $age = 0; // default: no caching (valid age of 0 seconds)
     
     /**
+     * @var float $displacement to randomize the maximum age for cache files (pos./neg. time displacement),
+     *          this is intended to use with lot of cached parts of data (to prevent invalidation on one point of time),
+     *          e.g. maximum age of 60 min and displacement of 0.5 means a random max age of 30 to 90 min
+     * @access protected
+     * @since 0.1
+     **/
+    protected $displacement = 0; // default: exact max age, no time displacement
+    
+    /**
      * @var string $folder absolute server path to cache folder
      * @access protected
      * @since 0.1
@@ -1290,10 +1318,13 @@ class SandboxCache
      * @access public
      *
      **/
-    public function __construct($maxage = 0, $folder = null)
+    public function __construct($maxage = 0, $folder = null, $displacement = 0)
     {
         // set valid age for cache files
         if ($maxage !== 0) $this->setAge($maxage);
+        
+        // set coefficient for time displacement
+        if ($displacement !== 0) $this->setDisplacement($displacement);
         
         // set cache folder
         if ($folder !== null) $this->setFolder($folder);
@@ -1314,6 +1345,27 @@ class SandboxCache
     public function setAge($age)
     {
         if (is_numeric($age) && intval($age) >= 0) $this->age = intval($age);
+        // TODO: throw exception
+        
+        return;
+    }
+
+    /**
+     * Set time displacement
+     *
+     * Used to set a random time shift for the maximum age of valid cache files.
+     * Values between 0 and 0.5 are recommended.
+     *
+     * @param float $shift relative coefficient between 0 and 1
+     *
+     * @return void
+     *
+     * @access public
+     * @since 0.1
+     **/
+    public function setDisplacement($shift)
+    {
+        if (is_float($shift) && $shift >= 0 && $shift < 1) $this->displacement = $shift;
         // TODO: throw exception
         
         return;
@@ -1379,9 +1431,9 @@ class SandboxCache
      * 
      * @throws Exception 'Cannot write cache!'
      **/
-    public function saveVar($var, $name, $namespace = null)
+    public function saveVar($var, $name, $namespace = null, $maxage = null)
     {
-        if ($this->age > 0)
+        if ($this->age > 0 || $maxage !== null)
         {
             // 1. write cache to memory
             if ($this->_setMemcache($var, $name, $namespace))
@@ -1421,8 +1473,9 @@ class SandboxCache
                         /* EVENT sandbox_write_cache_to_file
                          * @param Array    
                          */
-                        $this->pm->publish('sandbox_write_cache_to_file',
-                                           array('name'=>$name, 'namespace'=>$namespace, 'file'=>$cachefile, 'data'=>$cachedata));
+                        //TODO
+                        //$this->pm->publish('sandbox_write_cache_to_file',
+                        //                   array('name'=>$name, 'namespace'=>$namespace, 'file'=>$cachefile, 'data'=>$cachedata));
 
                         return true;
                         
@@ -1464,6 +1517,7 @@ class SandboxCache
      *
      * @param string $name name for cache (it will be hashed by md5)
      * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     * @param int $maxage maximal age of cache in seconds, or -1 for no cache invalidation by time
      *
      * @return mixed variable as saved type or null (if not cached)
      *
@@ -1475,9 +1529,9 @@ class SandboxCache
     public function getVar($name, $namespace = null, $maxage = null)
     {
 
-        if ($maxage === null) $maxage = $this->age;
-        
-        if (intval($maxage) > 0)
+        $_displacedMaxage = $this->_displacedAge($maxage);
+
+        if ($_displacedMaxage > 0 || $maxage === -1)
         {
             // 1. read cache from memory
             if ($var = $this->_getMemcache($name, $namespace, $maxage))
@@ -1501,8 +1555,8 @@ class SandboxCache
                         return false;
                     }
                 
-                    // test for valid age of cache
-                    if ($maxage < (time() - filemtime($this->folder.$cachename)))
+                    // test for valid age of cache, or no cach invalidation by time
+                    if ($_displacedMaxage < (time() - filemtime($this->folder.$cachename)) && $maxage !== -1)
                     {
                         // cache too old
                         return false;
@@ -1528,7 +1582,6 @@ class SandboxCache
                             
                             // unserialize (restore var type)
                             $var = unserialize($cachedata);
-                
                         }
                         else
                         {
@@ -1544,8 +1597,9 @@ class SandboxCache
                         /* EVENT sandbox_read_cache_from_file
                          * @param Array    
                          */
-                        $this->pm->publish('sandbox_read_cache_from_file',
-                                           array('name'=>$name, 'namespace'=>$namespace, 'file'=>$cachefile, 'data'=>$cachedata));
+                        //TODO
+                        //$this->pm->publish('sandbox_read_cache_from_file',
+                        //                   array('name'=>$name, 'namespace'=>$namespace, 'file'=>$cachefile, 'data'=>$cachedata));
 
                         return $var;
                         
@@ -1616,7 +1670,8 @@ class SandboxCache
     public function getOutput($name, $namespace = null, $maxage = null)
     {
         // get cached string and print it out
-        if ($output = $this->getVar($name, $namespace, $maxage) && $output !== false)
+        $output = $this->getVar($name, $namespace, $maxage);
+        if ($output !== false)
         {
             echo $output;
             return true;
@@ -1704,6 +1759,24 @@ class SandboxCache
     }
     
     /**
+     * Randomize maximum age by configured time displacement coefficient
+     *
+     * @param int $maxage maximum age for valid cache files (in seconds)
+     *
+     * @return int randomized maximum for valid cache time in seconds
+     *
+     * @access private
+     * @since 0.1
+     **/
+    private function _displacedAge($maxage)
+    {
+        if ($maxage === null) $maxage = $this->age;
+        $maxage = intval($maxage);
+
+        return rand(intval($maxage*(1-$this->displacement)), intval($maxage*(1+$this->displacement)));
+    }
+    
+    /**
      * Create name for cache file
      *
      * This method will create a name for the cache file out of the cache name,
@@ -1719,7 +1792,7 @@ class SandboxCache
      **/
     private function _createCachename($name, $namespace)
     {
-        if ($space = $this->_checkNamespace($namespace))
+        if (false !== $space = $this->_checkNamespace($namespace))
         {
             // namespace is valid
             if ($space !== null) $space .= '_-_';
