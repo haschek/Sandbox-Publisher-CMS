@@ -1219,6 +1219,13 @@ class SandboxPlugin
     protected $path = null;
     
     /**
+     * @var Array $config Plugin configuration as key-value pairs
+     * @access protected
+     * @since 0.1
+     **/
+    protected $config = null;
+    
+    /**
      * Sandbox Plugin constructor
      *
      * Construstor method, please do not overwrite this method in your plugin class!
@@ -1233,11 +1240,24 @@ class SandboxPlugin
      **/
     final public function __construct(Sandbox $sandbox, $pluginpath)
     {
+        // interfaces to API
+        
         $this->path = rtrim($pluginpath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
         $this->sandbox = $sandbox;
         $this->content = $sandbox->content;
         $this->pm = $sandbox->pm;
         $this->cache = $sandbox->cache;
+        
+        // plugin config from user configuration (done in bootstrap)
+        
+        $config = $this->sandbox->getConfig();
+        $classname = get_class($this);
+        if (isset($config[$classname]))
+        {
+            $this->config = $config[$classname];
+        }
+        unset($config);
+        unset($classname);
         
         $this->init();
     }

@@ -1,23 +1,13 @@
 <?php
 
+// TODO: Description, class + methods
 class LanguageChecker extends SandboxPlugin
 {
 
-    private $config = array();
-    private $languages = array();    
+    protected $languages = array();    
     
     protected function init()
     {
-        // load user configuration
-        $config = $this->sandbox->getConfig();
-        if (isset($config['LanguageChecker']))
-        {
-            // user configuration
-            $this->config = $config['LanguageChecker'];
-        }
-
-        // Foafpress event handlers for SPCMS
-        //$this->pm->subscribe('sandbox_parse_failed', $this, 'LoadResource'); // parameters: event name, class name or instance, event handler method
         
         $this->languages = $this->createUserPreferences();
         
@@ -99,5 +89,3 @@ class LanguageChecker extends SandboxPlugin
     }
     
 }
-
-?>
