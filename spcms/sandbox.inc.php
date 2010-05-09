@@ -188,18 +188,6 @@ class Sandbox
             
         }
         
-        // load plugins
-        if (isset($config['plugin']['load']) && is_array($config['plugin']['load'])
-            && count($config['plugin']['load']) > 0) {
-            
-            $plugins = implode(PATH_SEPARATOR, $config['plugin']['load']);
-            $plugins = explode(PATH_SEPARATOR, $plugins);
-            foreach ($plugins as $plugin) {
-                $this->pm->load($plugin);
-            }
-            
-        }
-        
         // add template folders
         if (isset($config['template']['folder']) && is_array($config['template']['folder'])
             && count($config['template']['folder']) > 0) {
@@ -219,6 +207,18 @@ class Sandbox
             $this->templateSetName($config['template']['name']);
         }
             
+        // load plugins
+        if (isset($config['plugin']['load']) && is_array($config['plugin']['load'])
+            && count($config['plugin']['load']) > 0) {
+            
+            $plugins = implode(PATH_SEPARATOR, $config['plugin']['load']);
+            $plugins = explode(PATH_SEPARATOR, $plugins);
+            foreach ($plugins as $plugin) {
+                $this->pm->load($plugin);
+            }
+            
+        }
+        
         /* EVENT sandbox_construct_complete
          * published at the end of Sandbox::__construct,
          * - SandboxContent and SandboxPluginmanager has been created
@@ -1150,6 +1150,12 @@ class SandboxPluginmanager
     {
         return count($this->_plugins);
     }
+    
+    // TODO: comment this
+    public function isActive($plugin)
+    {
+        return isset($this->_plugins[$plugin]);
+    }
 }
 
 /**
@@ -1251,6 +1257,19 @@ class SandboxPlugin
     protected function init()
     {
         return;
+    }
+    
+    /**
+     * Return plugin path
+     *
+     * @return string  $pluginpath Absolute path where plugin class is located
+     *
+     * @access public
+     * @since 0.1
+     **/
+    final public function getPath()
+    {
+        return $this->path;
     }
 
 }
@@ -1518,6 +1537,7 @@ class SandboxCache
      * @param string $name name for cache (it will be hashed by md5)
      * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
      * @param int $maxage maximal age of cache in seconds, or -1 for no cache invalidation by time
+     * @param int $displacement displacement factor for timeshift of cache invalidation time
      *
      * @return mixed variable as saved type or null (if not cached)
      *
@@ -1526,10 +1546,10 @@ class SandboxCache
      * 
      * @throws Exception 'Cannot read cache!'
      **/
-    public function getVar($name, $namespace = null, $maxage = null)
+    public function getVar($name, $namespace = null, $maxage = null, $displacement = null)
     {
 
-        $_displacedMaxage = $this->_displacedAge($maxage);
+        $_displacedMaxage = $this->_displacedAge($maxage, $displacement);
 
         if ($_displacedMaxage > 0 || $maxage === -1)
         {
@@ -1762,18 +1782,24 @@ class SandboxCache
      * Randomize maximum age by configured time displacement coefficient
      *
      * @param int $maxage maximum age for valid cache files (in seconds)
+     * @param int $displacement relative displacement factor for timeshift
      *
      * @return int randomized maximum for valid cache time in seconds
      *
      * @access private
      * @since 0.1
      **/
-    private function _displacedAge($maxage)
+    private function _displacedAge($maxage, $displacement)
     {
         if ($maxage === null) $maxage = $this->age;
+        if ($displacement === null) $displacement = $this->displacement;
         $maxage = intval($maxage);
+        if (!(is_float($displacement) && $displacement >= 0 && $displacement < 1)) $displacement = 0;
 
-        return rand(intval($maxage*(1-$this->displacement)), intval($maxage*(1+$this->displacement)));
+        $age = rand(intval($maxage*(1-$displacement)), intval($maxage*(1+$displacement)));
+        
+        //die(strval($age));
+        return ($age);
     }
     
     /**
