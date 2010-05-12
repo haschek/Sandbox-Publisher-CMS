@@ -1223,7 +1223,7 @@ class SandboxPlugin
      * @access protected
      * @since 0.1
      **/
-    protected $config = null;
+    protected $config = array();
     
     /**
      * Sandbox Plugin constructor

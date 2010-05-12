@@ -4,12 +4,12 @@
 class LanguageChecker extends SandboxPlugin
 {
 
-    protected $languages = array();    
+    protected $languagesUser = array();    
     
     protected function init()
     {
         
-        $this->languages = $this->createUserPreferences();
+        $this->languagesUser = $this->createUserPreferences();
         
         return;
         
@@ -49,14 +49,35 @@ class LanguageChecker extends SandboxPlugin
     
     public function getUserPreferences($string = false)
     {
-        if ($string) return implode(',', $this->languages);
-        return $this->languages;
+        if ($string) return implode(',', $this->languagesUser);
+        return $this->languagesUser;
+    }
+    
+    // returns enabled languages prioritized by user requested languages
+    public function getLanguageStack($string = false)
+    {
+        if (!isset($this->languageStack))
+        {
+            $requested = $this->getUserPreferences();
+            $enabled = $this->listLanguagesEnabled();
+            
+            // only keep the enabled languages from the requested languages
+            $languageStack = array_intersect($requested, $enabled);
+            
+            // merge that with other enabled languages
+            $languageStack = array_unique(array_merge($languageStack, $enabled));
+            
+            $this->languageStack = $languageStack;
+        }
+        
+        if ($string) return implode(',', $this->languageStack);
+        return $this->languageStack;
     }
     
     private function getLanguageRequests()
     {
         // save accepted languages to array
-        $accepted = explode(',', trim($_SERVER['HTTP_ACCEPT_LANGUAGE']));
+        $accepted = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])?explode(',', trim($_SERVER['HTTP_ACCEPT_LANGUAGE'])):array();
         $languages = array();
         
         if (count($accepted)>0)
@@ -86,6 +107,11 @@ class LanguageChecker extends SandboxPlugin
 
         return $languages;
     
+    }
+    
+    private function listLanguagesEnabled()
+    {
+        return (isset($this->config['enabled']) && is_array($this->config['enabled']))?$this->config['enabled']:array();
     }
     
 }
