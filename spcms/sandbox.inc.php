@@ -831,7 +831,7 @@ class SandboxPluginmanager
             // plugin is not active, load it
             if ($pluginpath = $this->need($pluginname)) {
             
-                eval('$this->_plugins["'.$classname.'"] = new '.$classname.'($this->_sandbox, $pluginpath);');
+                $this->_plugins[$classname] = new $classname($this->_sandbox, $pluginpath);
             }
         }
         
@@ -858,6 +858,8 @@ class SandboxPluginmanager
      *
      * @access public
      * @since 0.1
+     *
+     * @throws Exception 'Plugin %filename% is not found!'
      **/
     public function need($pluginname = null)
     {
@@ -877,6 +879,7 @@ class SandboxPluginmanager
             return dirname($pluginfile);
             
         } else {
+            throw new Exception('Plugin \''.$pluginname.'.php'.'\' is not found!');
             return false;
         }
     }
@@ -1055,7 +1058,7 @@ class SandboxPluginmanager
 
                 try {
                     $r = null;
-                    eval('$r = $pluginclass->'.$eventhandler['method'].'($arg);');
+                    $r = $pluginclass->$eventhandler['method']($arg);
                     $response[$i] = $r;
                 } catch (Exception $e) {
                     $response[$i] = $e;
