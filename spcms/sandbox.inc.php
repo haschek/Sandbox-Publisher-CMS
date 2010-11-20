@@ -1495,8 +1495,8 @@ class SandboxCache
                         // write data to file (without magic_quotes)
                         
                         // magic quotes off
-                        $q = get_magic_quotes_runtime();
-                        set_magic_quotes_runtime(0);
+                        $q = ini_get('magic_quotes_runtime');
+                        ini_set('magic_quotes_runtime', 0);
                         
                         // write to file
                         if (@fwrite($cachefile, $cachedata) === false)
@@ -1507,7 +1507,7 @@ class SandboxCache
                         }
                         
                         // restore magic quotes configuration 
-                        set_magic_quotes_runtime($q);
+                        ini_set('magic_quotes_runtime', $q);
                         
                         // close cache file
                         @fclose($cachfile);
