@@ -104,10 +104,12 @@ if (strpos($request, '?') !== false) {
 if (isset($production) && $production === true) {
     // Sandbox Application runs in production use
     // don't show any errors
+    ini_set('display_errors', 0);
     error_reporting(0);
 } else {
     // debug mode
     // show all tiny errors and warnings
+    ini_set('display_errors', 1);
     error_reporting(E_ALL | E_STRICT);
 }
 
