@@ -1612,8 +1612,8 @@ class SandboxCache
                         // read var from file (without magic_quotes)
                         
                         // magic quotes off, backup configuration
-                        $q = get_magic_quotes_runtime();
-                        set_magic_quotes_runtime(0);
+                        $q = ini_get('magic_quotes_runtime');
+                        ini_set('magic_quotes_runtime', 0);
                         
                         // get file size
                         $cachesize = filesize($this->folder.$cachename);
@@ -1632,7 +1632,7 @@ class SandboxCache
                         }
                         
                         // restore magic quotes configuration 
-                        set_magic_quotes_runtime($q);
+                        ini_set('magic_quotes_runtime', $q);
                         
                         // close cache file
                         @fclose($cachefile);
