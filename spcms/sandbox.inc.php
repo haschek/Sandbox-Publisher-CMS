@@ -183,7 +183,7 @@ class Sandbox
             $pluginfolders = implode(PATH_SEPARATOR, $config['plugin']['folder']);
             $pluginfolders = explode(PATH_SEPARATOR, $pluginfolders);
             foreach ($pluginfolders as $pluginfolder) {
-                $this->pm->addFolder(realpath(SANDBOX_PATH.$pluginfolder));
+                $this->pm->addFolder($pluginfolder);
             }
             
         }
@@ -902,26 +902,40 @@ class SandboxPluginmanager
     public function addFolder($folder = null, $sub = false)
     {
     
-        if (!$folder || !is_string($folder)) return false;
+        if (!$folder || !is_string($folder)) {
+            throw new Exception('Cannot add plugin folder: name is empty or not a string!');
+            return false;
+        }
         
-        if (substr($folder, 0, 1) != DIRECTORY_SEPARATOR) // local path, prefix sandbox path
+        if (substr($folder, 0, 1) != DIRECTORY_SEPARATOR) {
+            // assume local path, prefix sandbox path
             $folder = SANDBOX_PATH . $folder;
+        }
             
-        // beautify path
-        $folder = realpath($folder).DIRECTORY_SEPARATOR;
+        if (is_dir($folder)) {
 
-        // folder is already part of the environment
-        if (in_array($folder, $this->_environment)) return true;
-            
-        if (is_dir($folder) && is_readable($folder)) {
-            // add folder to environment
-            $this->_environment[] = $folder;
-            
-            // add also sub folders?
-            if ($sub === true) $this->_scan($folder, true);
+            // beautify path
+            $folder = realpath($folder).DIRECTORY_SEPARATOR;
 
-            return true;
+            // folder is already part of the environment
+            if (in_array($folder, $this->_environment)) return true;
+
+            if (is_readable($folder)) {
+
+                // add folder to environment
+                $this->_environment[] = $folder;
+
+                // add also sub folders?
+                if ($sub === true) $this->_scan($folder, true);
+
+                return true;
+            } else {
+                throw new Exception('Cannot add plugin folder: '.$folder.' is not readable!');
+                return false;
+            }
+
         } else {
+            throw new Exception('Cannot add plugin folder: '.$folder.' does not exists!');
             return false;
         }
     }
