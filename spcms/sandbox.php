@@ -59,6 +59,20 @@
  * @since      0.1
  **/
 
+// set error level
+if (isset($production) && $production === true) {
+    // Sandbox Application runs in production use
+    // don't show any errors
+    ini_set('display_errors', 0);
+    error_reporting(0);
+    define('IS_PRODUCTION_INSTANCE', true);
+} else {
+    // debug mode
+    // show all tiny errors and warnings
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL | E_STRICT);
+}
+
 // define sandbox path
 define('SANDBOX_PATH', rtrim(dirname(__FILE__), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
 
@@ -100,19 +114,6 @@ if (strpos($request, '?') !== false) {
     $file = rtrim(DOCUMENT_ROOT, DIRECTORY_SEPARATOR).$request;
 }
 
-// set error level
-if (isset($production) && $production === true) {
-    // Sandbox Application runs in production use
-    // don't show any errors
-    ini_set('display_errors', 0);
-    error_reporting(0);
-} else {
-    // debug mode
-    // show all tiny errors and warnings
-    ini_set('display_errors', 1);
-    error_reporting(E_ALL | E_STRICT);
-}
-
 // check configuration
 if (!isset($c)) $c = array();
 
@@ -127,7 +128,7 @@ try {
 } catch (Exception $e) { // something went wrong
 
     // check current error level
-    if (!isset($production) || $production !== true) {
+    if (!defined('IS_PRODUCTION_INSTANCE')) {
         // print out debug message
         echo '<h1>'.$e->getMessage().'</h1>';
         echo '<p>in <strong>'.$e->getFile().'</strong> at line <strong>'.$e->getLine().'</strong>, code <strong>'.$e->getCode().'</strong>.</p>';
