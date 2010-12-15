@@ -4,7 +4,10 @@
  *
  * Listens to (log message) events, to save and echo log messages
  *
- * @author Michael Haschke, http://eye48.com/
+ * @category  SPCMS
+ * @package   Sandbox-Plugins
+ * @author    Michael Haschke, http://eye48.com
+ * @license   http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
  */
 class DebugLog extends SandboxPlugin
 {
