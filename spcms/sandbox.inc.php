@@ -1723,6 +1723,7 @@ class SandboxCache
      *
      * @access public
      * @since 0.1
+     * @deprecated 0.1
      **/
     public function getOutput($name, $namespace = null, $maxage = null)
     {
@@ -1738,6 +1739,83 @@ class SandboxCache
         ob_start();
         ob_implicit_flush(false);
         return false;
+    }
+    
+    /**
+     * Echo output from cache, or record output buffer
+     *
+     * This method is used to read an output buffer from a cache file and print it
+     * out immediately, only if the cached output is still valid. If cache is
+     * outdated the method starts to record the following output buffer.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return boolean true for successfull output, false if cache not available
+     *
+     * @access public
+     * @since 0.2
+     **/
+    public function echoOutputOrRecordIt($name, $namespace = null, $maxage = null)
+    {
+        // get cached string and print it out
+        if ($this->echoOutput($name, $namespace, $maxage))
+        {
+            return true;
+        }
+        
+        // or start to save output to buffer
+        $this->recordOutput();
+        return false;
+    }
+    
+    /**
+     * Echo output from cache
+     *
+     * This method is used to read an output buffer from a cache file and print it
+     * out immediately, or return false if cached output is outdated.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return boolean true for successfull output, false if cache not available
+     *
+     * @access public
+     * @since 0.2
+     **/
+    public function echoOutput($name, $namespace = null, $maxage = null)
+    {
+        // get cached string and print it out
+        $output = $this->getVar($name, $namespace, $maxage);
+        if ($output !== false)
+        {
+            echo $output;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Start to record output buffer
+     *
+     * This method is used to start the recording of the following output buffer.
+     * That enables safing it later to a cache file.
+     *
+     * @param string $name name for cache (it will be hashed by md5)
+     * @param string $namespace namespace, only alpha-numeric chars (plus underscored '_' and minus '-') are allowed
+     *
+     * @return boolean true for successfull output, false if cache not available
+     *
+     * @access public
+     * @since 0.2
+     **/
+    public function recordOutput()
+    {
+        // or start to save output to buffer
+        ob_start();
+        ob_implicit_flush(false);
+        return;
     }
     
     /**
