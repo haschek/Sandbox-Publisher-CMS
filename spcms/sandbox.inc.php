@@ -1075,6 +1075,9 @@ class SandboxPluginmanager
                     $r = $pluginclass->$eventhandler['method']($arg);
                     $response[$i] = $r;
                 } catch (Exception $e) {
+                    if (!defined('IS_PRODUCTION_INSTANCE') || IS_PRODUCTION_INSTANCE !== true) {
+                        throw $e;
+                    }
                     $response[$i] = $e;
                 }
             }
