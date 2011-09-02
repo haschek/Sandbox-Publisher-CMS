@@ -619,11 +619,35 @@ class SandboxContent
 {
     /**
      * @var array $_c array stack where all content vars are stored in
-     * @access private
+     * @access protected
      * @since 0.1
      **/
     protected $_c = array();
-    
+
+    /**
+     * @var boolean $_useFilters Only use activated filter on content items if
+     *      this switch is set to true (default).
+     * @access protected
+     * @since 0.2
+     **/
+    protected $_processFilters = true;
+
+    /**
+     * @var array $_activeFilters array stack containing names of active content
+     *      filters
+     * @access protected
+     * @since 0.2
+     **/
+    protected $_activeFilters = array();
+
+    /**
+     * @var array $_disposableFilters array stack containing names of filters
+     *      only used for the next requested content item
+     * @access protected
+     * @since 0.2
+     **/
+    protected $_disposableFilters = array();
+
     /**
      * Sandbox Content contructor
      *
@@ -638,9 +662,39 @@ class SandboxContent
     {
         // only a stub
     }
+
+    /**
+     * Get content of variable, processed by referenced filters, or without
+     * filter processing.
+     *
+     * @param string $name name of content item
+     * @param mixed $useFilters - array with filter names, or true|false to
+     *        enable/disable previously configured filters
+     *
+     * @return mixed
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function getItem($name, $useFilters = false)
+    {
+        if (isset($this->_c[$name]))
+        {
+            $content_of_item =  $this->_c[$name];
+            
+            // TODO: filter processing
+
+            return $content_of_item;
+        }
+        else
+        {
+            return null; // return empty string
+        }
+
+    }
         
     /**
-     * Magic method to get variable
+     * Magic method to get variable, shortcut for getItem(varname, true).
      *
      * Do not use this directly, just use $SandboxContentObject->varname;
      *
@@ -653,8 +707,8 @@ class SandboxContent
      **/
     public function __get($var)
     {
-        if (isset($this->_c[$var])) {
-            return $this->_c[$var];
+        if (is_string($var)) {
+            return $this->getItem($var, true);
         } else {
             return null; // return empty string
         }
@@ -712,14 +766,243 @@ class SandboxContent
         unset($this->_c[$var]);
         return;
     }
+
+    /**
+     * Method to add one filter to the end of the filter stack, processed on
+     * requested content items.
+     *
+     * @param string $name name of filter
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function addFilter($name)
+    {
+        if (is_string($name))
+        {
+            $this->_activeFilters[] = $name;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Method to remove one filter from the filter stack.
+     *
+     * @param string $name name of filter
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function removeFilter($name)
+    {
+        if (!is_string($name))
+        {
+            return false;
+        }
+        
+        $this->_activeFilters = array_diff($this->_activeFilters, array($name));
+        
+        return true;
+    }
+
+    /**
+     * Method to add various filters to the end of the filter stack, processed
+     * on requested content items.
+     *
+     * @param array $names containing filter names as strings
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function addFilters($names)
+    {
+        if (!is_array($names))
+        {
+            return false;
+        }
+        elseif (count($names) == 0)
+        {
+            return true;
+        }
+
+        $list_of_returns = array();
+
+        foreach ($names as $filtername)
+        {
+            $list_of_returns[] = $this->addFilter($filtername);
+        }
+
+        $list_of_different_returns = array_unique($list_of_returns);
+
+        if (count($list_of_different_returns) == 1)
+        {
+            // all filters were added successfully (all true)
+            // or all addings failed (all false)
+            return $list_of_different_returns[0];
+        }
+        else
+        {
+            // mix of successfull and failed addings
+            return false;
+        }
+
+    }
+
+    /**
+     * Method to remove various filters from the filter stack.
+     *
+     * @param array $names containing filter names as strings
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function removeFilters($names)
+    {
+        if (!is_array($names))
+        {
+            return false;
+        }
+        elseif (count($names) == 0)
+        {
+            return true;
+        }
+
+        $list_of_returns = array();
+
+        foreach ($names as $filtername)
+        {
+            $list_of_returns[] = $this->removeFilter($filtername);
+        }
+
+        $list_of_different_returns = array_unique($list_of_returns);
+
+        if (count($list_of_different_returns) == 1)
+        {
+            // all filters were removed successfully (all true)
+            // or all removings failed (all false)
+            return $list_of_different_returns[0];
+        }
+        else
+        {
+            // mix of successfull and failed removings
+            return false;
+        }
+
+    }
+
+    /**
+     * Method to add various filters to the filter stack, after the filter stack
+     * was cleared first.
+     *
+     * @param array $names containing filter names as strings
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function setFilters($names)
+    {
+        if (!is_array($names))
+        {
+            return false;
+        }
+
+        $this->_activeFilters = array(); // clear stack
+
+        return $this->addFilters($names);
+    }
+
+    /**
+     * Remove all filters from all filter stacks.
+     *
+     * @return void
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function clearFilters()
+    {
+        $this->_activeFilters = array();
+        $this->clearDisposableFilters();
+        return;
+    }
+
+    /**
+     * Method to set a filter stack what will be used only on the next requested
+     * content item, this stack will be cleared straight after it.
+     *
+     * @param array $names containing filter names as strings
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function setDisposableFilters($names)
+    {
+        if (!is_array($names))
+        {
+            return false;
+        }
+
+        foreach ($names as $filtername)
+        {
+            if (is_string($filtername))
+            {
+                $this->_disposableFilters[] = $filtername;
+            }
+        }
+
+        return true;
+    }
     
+    public function clearDisposableFilters()
+    {
+        $this->_disposableFilters = array();
+        return;
+    }
+
+    /**
+     * Use filter stack to process
+     *
+     * @param boolean true to process filters on requested content items, false
+     *        to ignore filters
+     *
+     * @return boolean
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function setFilterProcessing($bool)
+    {
+        if (!is_bool($bool))
+        {
+            return false;
+        }
+
+        $this->_processFilters = $bool;
+
+        return true;
+    }
+
     // TODO: comment this
     public function getKeys()
     {
         return array_keys($this->_c);
     }
     
-    //
+    // TODO: comment this
     public function getArray()
     {
         return $this->_c;
