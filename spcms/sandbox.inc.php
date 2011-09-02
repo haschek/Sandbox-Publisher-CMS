@@ -17,11 +17,9 @@
  * @author    Michael Haschke, eye48.com
  * @copyright 2008 Michael Haschke
  * @license   http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- * @version   SVN: $Id$
  *
  * WEBSITES
  *
- * @link      http://sandbox.eye48.com/sandbox-publisher-cms Project Website and Overview
  * @link      http://code.google.com/p/sandbox-publisher-cms Dev Website and Issue tracker
  *
  * LICENCE
@@ -57,7 +55,7 @@
  * @subpackage Sandbox-Includes
  * @author     Michael Haschke, eye48.com
  * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @link       https://github.com/haschek/Sandbox-Publisher-CMS
  * @since      0.1
  * 
  **/
@@ -613,7 +611,7 @@ class Sandbox
  * @subpackage Sandbox-Includes
  * @author     Michael Haschke, eye48.com
  * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @link       https://github.com/haschek/Sandbox-Publisher-CMS
  * @since      0.1
  * 
  **/
@@ -743,7 +741,7 @@ class SandboxContent
  * @subpackage Sandbox-Includes
  * @author     Michael Haschke, eye48.com
  * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @link       https://github.com/haschek/Sandbox-Publisher-CMS
  * @since      0.1
  * 
  **/
@@ -1194,7 +1192,7 @@ class SandboxPluginmanager
  * @subpackage Sandbox-Plugin
  * @author     Michael Haschke, eye48.com
  * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @link       https://github.com/haschek/Sandbox-Publisher-CMS
  * @since      0.1
  * 
  **/
@@ -1325,7 +1323,7 @@ class SandboxPlugin
  * @subpackage Sandbox-Includes
  * @author     Michael Haschke, eye48.com
  * @license    http://www.opensource.org/licenses/gpl-2.0.php The GNU General Public License (GPL)
- * @link       http://http://code.google.com/p/sandbox-publisher-cms
+ * @link       https://github.com/haschek/Sandbox-Publisher-CMS
  * @since      0.1
  * 
  **/
