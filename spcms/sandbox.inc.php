@@ -156,7 +156,7 @@ class Sandbox
         $this->config = $config;
 
         // create content object
-        $this->content = new SandboxContent();
+        $this->content = new SandboxContent($this);
         
         // create plugin environment
         $this->pm = new SandboxPluginmanager($this);
@@ -618,6 +618,13 @@ class Sandbox
 class SandboxContent
 {
     /**
+     * @var Sandbox $sandbox Sandbox object instance
+     * @access private
+     * @since 0.2
+     **/
+    private $_sandbox = null;
+
+    /**
      * @var array $_c array stack where all content vars are stored in
      * @access protected
      * @since 0.1
@@ -658,9 +665,9 @@ class SandboxContent
      * @since 0.1
      * @access public
      **/
-    public function __construct()
+    public function __construct(Sandbox $sandbox)
     {
-        // only a stub
+        $this->_sandbox = $sandbox;
     }
 
     /**
@@ -682,7 +689,54 @@ class SandboxContent
         {
             $content_of_item =  $this->_c[$name];
             
-            // TODO: filter processing
+            if (is_array($useFilters))
+            {
+                // add filters to process them only once
+                // and save return state (true or false)
+                $useFilters = $this->setDisposableFilters($useFilters);
+            }
+            
+            if ($useFilters === false)
+            {
+                return $content_of_item;
+            }
+
+            // get filters
+
+            $filters_to_process = array();
+
+            if (count($this->_disposableFilters) > 0)
+            {
+                // use disposable filters only once
+                $filters_to_process = $this->_disposableFilters;
+                $this->clearDisposableFilters();
+            }
+
+            if (count($this->_activeFilters) > 0)
+            {
+                $filters_to_process = $this->_activeFilters;
+            }
+
+            if (count($filters_to_process) === 0)
+            {
+                // no filters to process
+                return $content_of_item;
+            }
+
+            // get type of content item
+
+            $type_of_item = gettype($content_of_item);
+
+            // process filters
+            // using events for this, so listeners can alter the content
+
+            foreach ($filters_to_process as $filtername)
+            {
+                // create event name
+                $filter_event_name = 'sandbox_contentfilter_'.$type_of_item.'_'.$filtername;
+                // publish event
+                $this->_sandbox->pm->publish($filter_event_name, $content_of_item);
+            }
 
             return $content_of_item;
         }
