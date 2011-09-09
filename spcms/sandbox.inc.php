@@ -711,8 +711,7 @@ class SandboxContent
                 $filters_to_process = $this->_disposableFilters;
                 $this->clearDisposableFilters();
             }
-
-            if (count($this->_activeFilters) > 0)
+            elseif (count($this->_activeFilters) > 0)
             {
                 $filters_to_process = $this->_activeFilters;
             }
@@ -757,7 +756,7 @@ class SandboxContent
      * @return mixed
      *
      * @since 0.1
-     * @access private
+     * @access public
      **/
     public function __get($var)
     {
@@ -779,7 +778,7 @@ class SandboxContent
      * @return void
      *
      * @since 0.1
-     * @access private
+     * @access public
      **/
     public function __set($var, $value)
     {
@@ -796,7 +795,7 @@ class SandboxContent
      * @return boolean
      *
      * @since 0.1
-     * @access private
+     * @access public
      **/
     public function __isset($var)
     {
@@ -813,12 +812,40 @@ class SandboxContent
      * @return boolean
      *
      * @since 0.1
-     * @access private
+     * @access public
      **/
     public function __unset($var)
     {
         unset($this->_c[$var]);
         return;
+    }
+
+    /**
+     * Magic method to get a filtered content item
+     *
+     * Do not use this directly, just use unset($SandboxContentObject->varname);
+     *
+     * @param string $varname name of content item
+     * @param array $filterstack containing filter names as strings
+     *
+     * @return mixed
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function __call($varname, $filterstack)
+    {
+        if (count($filterstack) == 0)
+        {
+            return $this->getItem($varname, false);
+        }
+
+        if ($this->setDisposableFilters($filterstack))
+        {
+            return $this->getItem($varname, true);
+        }
+
+        return null;
     }
 
     /**
