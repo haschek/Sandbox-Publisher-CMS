@@ -687,57 +687,7 @@ class SandboxContent
     {
         if (isset($this->_c[$name]))
         {
-            $content_of_item =  $this->_c[$name];
-            
-            if (is_array($useFilters))
-            {
-                // add filters to process them only once
-                // and save return state (true or false)
-                $useFilters = $this->setDisposableFilters($useFilters);
-            }
-            
-            if ($useFilters === false)
-            {
-                return $content_of_item;
-            }
-
-            // get filters
-
-            $filters_to_process = array();
-
-            if (count($this->_disposableFilters) > 0)
-            {
-                // use disposable filters only once
-                $filters_to_process = $this->_disposableFilters;
-                $this->clearDisposableFilters();
-            }
-            elseif (count($this->_activeFilters) > 0)
-            {
-                $filters_to_process = $this->_activeFilters;
-            }
-
-            if (count($filters_to_process) === 0)
-            {
-                // no filters to process
-                return $content_of_item;
-            }
-
-            // get type of content item
-
-            $type_of_item = gettype($content_of_item);
-
-            // process filters
-            // using events for this, so listeners can alter the content
-
-            foreach ($filters_to_process as $filtername)
-            {
-                // create event name
-                $filter_event_name = 'sandbox_contentfilter_'.$type_of_item.'_'.$filtername;
-                // publish event
-                $this->_sandbox->pm->publish($filter_event_name, $content_of_item);
-            }
-
-            return $content_of_item;
+            return $this->filterVar($this->_c[$name], $useFilters);
         }
         else
         {
@@ -745,7 +695,76 @@ class SandboxContent
         }
 
     }
-        
+
+    /**
+     * Get content of variable, processed by referenced filters, or without
+     * filter processing.
+     *
+     * @param mixed $contentvar content to be filtered
+     * @param mixed $useFilters - array with filter names, or true|false to
+     *        enable/disable previously configured filters
+     *
+     * @return mixed
+     *
+     * @since 0.2
+     * @access public
+     **/
+    public function filterVar($contentvar, $useFilters = false)
+    {
+        $content_of_item =  $contentvar;
+
+        if (is_array($useFilters))
+        {
+            // add filters to process them only once
+            // and save return state (true or false)
+            $useFilters = $this->setDisposableFilters($useFilters);
+        }
+
+        if ($useFilters === false)
+        {
+            return $content_of_item;
+        }
+
+        // get filters
+
+        $filters_to_process = array();
+
+        if (count($this->_disposableFilters) > 0)
+        {
+            // use disposable filters only once
+            $filters_to_process = $this->_disposableFilters;
+            $this->clearDisposableFilters();
+        }
+        elseif (count($this->_activeFilters) > 0)
+        {
+            $filters_to_process = $this->_activeFilters;
+        }
+
+        if (count($filters_to_process) === 0)
+        {
+            // no filters to process
+            return $content_of_item;
+        }
+
+        // get type of content item
+
+        $type_of_item = gettype($content_of_item);
+
+        // process filters
+        // using events for this, so listeners can alter the content
+
+        foreach ($filters_to_process as $filtername)
+        {
+            // create event name
+            $filter_event_name = 'sandbox_contentfilter_'.$type_of_item.'_'.$filtername;
+            // publish event
+            $this->_sandbox->pm->publish($filter_event_name, $content_of_item);
+        }
+
+        return $content_of_item;
+
+    }
+
     /**
      * Magic method to get variable, shortcut for getItem(varname, true).
      *
@@ -1672,6 +1691,21 @@ class SandboxPlugin
     final public function getPath()
     {
         return $this->path;
+    }
+
+    /**
+     * Add log message via event handler, adding memory usage at this point
+     *
+     * @return string $msg Log message
+     *
+     * @access public
+     * @since 0.2
+     **/
+    final public function addLogMessage($msg)
+    {
+        $msg = $msg.' -- memory '.intval(memory_get_usage(true)/1024).'kb';
+        $this->sandbox->pm->publish('sandbox_add_log_message', $msg);
+        return;
     }
 
 }
