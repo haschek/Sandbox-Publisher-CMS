@@ -177,5 +177,25 @@ class LanguageChecker extends SandboxPlugin
         if ($string) return implode(',', array_unique($languagestack));
         return array_unique($languagestack);
     }
+
+    public function setlocale($category, $suffixes)
+    {
+        if (!is_array($suffixes))
+        {
+            return false;
+        }
+
+        $languagestack = $this->getLanguageStackMergedFromUserAndApplication();
+        $localestack = array();
+        foreach ($languagestack as $langcode)
+        {
+            foreach ($suffixes as $suffix)
+            {
+                $localestack = $langcode.$suffix;
+            }
+        }
+        //print_r($languagestack);
+        return setlocale($category, $localestack);
+    }
     
 }
