@@ -15,11 +15,13 @@ class DebugLog extends SandboxPlugin
 
     protected function init()
     {
-
         $this->pm->subscribe('sandbox_add_log_message', $this, 'addMessage');
-        $this->pm->subscribe('sandbox_end_of_template_header', $this, 'printCssStyles');
-        $this->pm->subscribe('sandbox_end_of_template_body', $this, 'output');
 
+        if (!defined('IS_PRODUCTION_INSTANCE'))
+        {
+            $this->pm->subscribe('sandbox_end_of_template_header', $this, 'printCssStyles');
+            $this->pm->subscribe('sandbox_end_of_template_body', $this, 'output');
+        }
     }
 
     public function addMessage($msg)
@@ -63,7 +65,7 @@ class DebugLog extends SandboxPlugin
 
     public function output()
     {
-        if (!defined('IS_PRODUCTION_INSTANCE') && count($this->log_messages)>0)
+        if (count($this->log_messages)>0)
         {
             echo '<div id="SPCSM_DebugLog"><strong>DEBUGINFO</strong>'.PHP_EOL;
             echo('<pre>'.print_r($this->log_messages, true).'</pre>').PHP_EOL;
