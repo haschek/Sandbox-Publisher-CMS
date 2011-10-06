@@ -746,15 +746,13 @@ class SandboxContent
             return $content_of_item;
         }
 
-        // get type of content item
-
-        $type_of_item = gettype($content_of_item);
-
         // process filters
         // using events for this, so listeners can alter the content
 
         foreach ($filters_to_process as $filtername)
         {
+            // get type of content item (in loop b/c type can change)
+            $type_of_item = gettype($content_of_item);
             // create event name
             $filter_event_name = 'sandbox_contentfilter_'.$type_of_item.'_'.$filtername;
             // publish event
