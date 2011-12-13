@@ -171,6 +171,20 @@ class FilterBasicLiquid extends SandboxPlugin
         return $timestamp;
     }
 
+    // Convert a Time into W3CDTF format, e.g. 2002-10-02T10:00:00-05:00
+    public function date_to_w3c(&$string)
+    {
+        $timestamp = $this->_create_timestamp_from_string($string);
+        $string = date(DATE_W3C, $timestamp);
+        return $string;
+    }
+
+    public function timestamp_to_w3c(&$timestamp)
+    {
+        $timestamp = date(DATE_W3C, $timestamp);
+        return $timestamp;
+    }
+
     // Convert a Time into XML Schema format, e.g. 2008-11-17T13:07:54-08:00
     public function date_to_xmlschema(&$string)
     {
