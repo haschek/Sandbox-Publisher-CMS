@@ -191,11 +191,18 @@ class LanguageChecker extends SandboxPlugin
         {
             foreach ($suffixes as $suffix)
             {
-                $localestack = $langcode.$suffix;
+                $localestack[] = $langcode.$suffix;
             }
         }
         //print_r($languagestack);
-        return setlocale($category, $localestack);
+        
+        $this->addLogMessage('Old Locale settinge: '.setlocale($category, '0' ));
+        
+        $locale = setlocale($category, $localestack);
+        
+        $this->addLogMessage('Set Locale by ['.implode(', ', $languagestack).']['.implode(', ', $suffixes).'] '.$category.' to: '.$locale);
+        
+        return $locale;
     }
     
 }
