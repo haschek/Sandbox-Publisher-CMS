@@ -77,7 +77,7 @@ if (isset($production) && $production === true) {
 define('SANDBOX_PATH', rtrim(dirname(__FILE__), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
 
 // define document's root path'
-define('DOCUMENT_ROOT', rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+define('DOCUMENT_ROOT', rtrim(realpath($_SERVER['DOCUMENT_ROOT']), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
 
 // get used protocoll http(s)
 if (!isset($_SERVER['HTTPS']) || !$_SERVER['HTTPS'] || $_SERVER['HTTPS'] == 'off') {
